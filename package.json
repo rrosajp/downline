@@ -1,64 +1,18 @@
 {
   "name": "downline",
   "productName": "Downline",
-  "version": "1.3.1",
+  "version": "3.0.0",
   "description": "A cross-platform video and audio downloader for YouTube, Vimeo, Dailymotion, SoundCloud and many other sites",
-  "homepage": "https://github.com/jarbun/downline",
-  "main": "./src/main.js",
+  "homepage": "https://github.com/stefnotch/downline",
   "scripts": {
-    "dev": "cross-env NODE_ENV=DEV electron .",
-    "prebuild:all": "rm -rf dist && rm -rf releases/*",
-    "build:all": "npm run build:win & npm run build:linux & npm run build:mac & wait",
-    "build:win": "build --win",
-    "postbuild:win": "cd \"./dist/win\" && mv *.exe ../../releases/downline-$npm_package_version-setup-windows.exe && mv win-unpacked downline && 7z a -mx=9 downline-$npm_package_version-portable-windows.7z downline && mv *.7z ../../releases/",
-    "build:linux": "build --linux",
-    "postbuild:linux": "cd \"./dist/linux\" && mv *.AppImage ../../releases/downline-$npm_package_version-appimage-linux.AppImage && mv linux-unpacked downline && tar -cJf downline-$npm_package_version-portable-linux.tar.xz downline && mv *.tar.xz ../../releases/",
-    "build:mac": "build --mac",
-    "postbuild:mac": "cd \"./dist/mac/mac\" && 7z a -mx=9 downline-$npm_package_version-portable-macos.7z Downline.app && mv *.7z ../../../releases/"
+    "dev": "tauri dev",
+    "tauri": "tauri"
   },
-  "author": "Arjun B <https://github.com/jarbun>",
   "license": "MIT",
-  "devDependencies": {
-    "electron": "^3.0.10",
-    "electron-builder": "^20.40.2",
-    "cross-env": "^5.2.0"
-  },
-  "build": {
-    "appId": "com.jarbun.downline",
-    "directories": {
-      "output": "dist/${os}"
-    },
-    "mac": {
-      "target": "dir",
-      "icon": "build/256x256.icns"
-    },
-    "linux": {
-      "target": "AppImage",
-      "icon": "build/256x256.png"
-    },
-    "win": {
-      "target": "nsis",
-      "icon": "build/256x256.ico"
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true
-    },
-    "files": [
-      "./src/**",
-      "./static/**",
-      "LICENSE",
-      "package.json"
-    ],
-    "extraFiles": [
-      {
-        "from": "./resources/${os}",
-        "to": "./resources",
-        "filter": "**/*"
-      }
-    ]
-  },
   "dependencies": {
-    "fs-extra": "^8.0.1"
+    "tauri": "^0.12.0"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.2"
   }
 }
