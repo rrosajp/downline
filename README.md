@@ -5,6 +5,11 @@
 
 **Download the latest version [here](https://github.com/jarbun/downline/releases/latest)**.
 
+## Current Status
+
+We're investigating a rewrite of Downline using [Tauri](https://github.com/tauri-apps/tauri). This would allow us to ship much smaller binaries while also making sure that the software is as sandboxed as possible. 
+
+
 ## Screenshots
 <p align="center">
   <img src="https://user-images.githubusercontent.com/23068820/52162513-f5db9a00-26fa-11e9-8cca-964d921f3bf3.png" alt="screenshots" width="460"/>
