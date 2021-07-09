@@ -25,7 +25,7 @@
             </span>
           </section>
 
-          <section class="middle" @click="choose(item)">
+          <section class="middle" @click="(ev) => choose(ev, item)">
             <h1>{{ item.title }}</h1>
             <span class="duration">{{ item.duration }}</span>
             <div class="options" v-if="item.progress.value == 0 && item.state === 'stopped'">
@@ -377,6 +377,364 @@ const store = new Store('store', {
       return global;
     });
 
+    function isStarting(item: DownloadableItem) {
+      return item.progress.value == 0 && item.state !== "queued";
+    }
+
+    function isQueued(item: DownloadableItem) {
+      return item.state === "queued";
+    }
+
+    function isPaused(item: DownloadableItem) {
+      return item.progress.value != 0 && item.state === "stopped";
+    }
+
+    function isDownloading(item: DownloadableItem) {
+      return item.progress.value != 0 && item.state === "downloading";
+    }
+
+    function isCompleted(item: DownloadableItem) {
+      return item.state === "completed";
+    }
+
+    function isPostprocessing(item: DownloadableItem) {
+      return item.state === "postprocessing";
+    }
+
+    function choose(ev: MouseEvent, item: DownloadableItem) {
+      if (ev.ctrlKey) {
+        // If ctrl key is pressed, select clicked item
+        item.isChosen = !item.isChosen;
+        showMoreOptions.value = true;
+      } else {
+        // Else unselect all
+        showMoreOptions.value = false;
+        downloadables.forEach((x) => (x.isChosen = false));
+      }
+      updateGlobals();
+    }
+
+    function updateGlobals() {
+      this.global.isAudioChosen = this.modifiableItems.every((x) => x.isAudioChosen);
+      this.global.isSubsChosen = this.modifiableItems.every((x) => x.subtitles.length === 0 || x.isSubsChosen);
+    }
+
+    function chosenQuality(item: DownloadableItem) {
+      return item.isAudioChosen ? item.formats.audio[item.formats.audioIndex] : item.formats.video[item.formats.videoIndex];
+    }
+
+    function increment(item: DownloadableItem) {
+      if (item.isAudioChosen && item.formats.audioIndex < item.formats.audio.length - 1) {
+        item.formats.audioIndex++;
+      } else if (!item.isAudioChosen && item.formats.videoIndex < item.formats.video.length - 1) {
+        item.formats.videoIndex++;
+      }
+
+      updateChosenQuality(item);
+    }
+
+    function decrement(item: DownloadableItem) {
+      if (item.isAudioChosen && item.formats.audioIndex > 0) {
+        item.formats.audioIndex--;
+      } else if (!item.isAudioChosen && item.formats.videoIndex > 0) {
+        item.formats.videoIndex--;
+      }
+
+      updateChosenQuality(item);
+    }
+
+    function updateChosenQuality(item) {
+      // If global audio/video were modified, update audio/video of selected items
+      if (item.isGlobal) {
+        const newQuality = this.chosenQuality(this.global);
+
+        this.downloadables.forEach((x) => {
+          if (x.isChosen || !this.anyChosen) {
+            const index = item.isAudioChosen ? x.formats.audio.indexOf(newQuality) : x.formats.video.indexOf(newQuality);
+
+            if (index !== -1) {
+              if (item.isAudioChosen) x.formats.audioIndex = index;
+              else x.formats.videoIndex = index;
+            }
+          }
+        });
+      }
+      this.$forceUpdate();
+    }
+
+    function updateChosenProp(prop) {
+      if (prop === "audio") this.global.isAudioChosen = !this.global.isAudioChosen;
+      else this.global.isSubsChosen = !this.global.isSubsChosen;
+
+      this.downloadables.forEach((x) => {
+        if ((x.isChosen || !this.anyChosen) && x.state === "stopped" && x.progress.value == 0) {
+          if (prop === "audio") x.isAudioChosen = this.global.isAudioChosen;
+          else x.isSubsChosen = this.global.isSubsChosen;
+        }
+      });
+    }
+
+    function updateIsAudioChosen(item) {
+      item.isAudioChosen = !item.isAudioChosen;
+      // Update global if necessary
+      this.global.isAudioChosen = this.modifiableItems.every((x) => x.isAudioChosen);
+    }
+
+    function updateIsSubsChosen(item) {
+      item.isSubsChosen = !item.isSubsChosen;
+      // Update global if necessary
+      this.global.isSubsChosen = this.modifiableItems.every((x) => x.subtitles.length === 0 || x.isSubsChosen);
+    }
+
+    function fetchInfo() {
+      if (this.newURL.trim().length !== 0) {
+        // Load link if url field is not empty
+        document.querySelectorAll("#loading-indicator span").forEach((x) => x.classList.remove("hidden"));
+
+        ytdl.fetchInfo({
+          urls: [this.newURL],
+          onSuccess: (info) => {
+            if (info != null) this.addItem(info);
+          },
+          onError: (err) => console.log(err),
+          onExit: () => document.querySelectorAll("#loading-indicator span").forEach((x) => x.classList.add("hidden")),
+        });
+
+        this.newURL = "";
+      } else {
+        // Get link from clipboard
+        this.newURL = clipboard.readText();
+      }
+    }
+
+    function addItem(item: DownloadableItem) {
+      // Add downloadable to list if not already present
+      if (downloadables.findIndex((x) => x.url === item.url) === -1) {
+        downloadables.push(item);
+      }
+    }
+
+    function download(url) {
+      const index = this.downloadables.findIndex((x) => x.url === url);
+      const item = this.downloadables[index];
+      // Stop if an invalid quality is chosen
+      if (this.chosenQuality(item) == null) return;
+
+      if (this.ongoingDownloads < this.maxSimultaneous) {
+        this.downloadables[index].state = "downloading";
+
+        let outputFormat;
+        if (this.downloadables[index].playlist.exists && this.autonumberItems) {
+          outputFormat = path.join(
+            this.downloadLocation,
+            this.downloadables[index].playlist.title,
+            `${this.downloadables[index].playlist.index} - %(title)s.%(ext)s`
+          );
+          this.downloadables[index].filepath = path.join(this.downloadLocation, this.downloadables[index].playlist.title, "*");
+        } else if (this.downloadables[index].playlist.exists) {
+          outputFormat = path.join(this.downloadLocation, this.downloadables[index].playlist.title, "%(title)s.%(ext)s");
+          this.downloadables[index].filepath = path.join(this.downloadLocation, this.downloadables[index].playlist.title, "*");
+        } else {
+          outputFormat = path.join(this.downloadLocation, "%(title)s.%(ext)s");
+          this.downloadables[index].filepath = path.join(this.downloadLocation, "*");
+        }
+
+        this.ongoingDownloads++;
+
+        ytdl.download({
+          item: item,
+          outputFormat: outputFormat,
+          audioFormat: this.audioFormats[this.audioFormatIndex],
+          videoFormat: this.videoFormats[this.videoFormatIndex],
+          onStart: () => console.log("Download Started"),
+          onDownload: (url, { progress, filepath, isPostprocessing }) => {
+            const index = this.downloadables.findIndex((x) => x.url === url);
+            if (progress != null) this.downloadables[index].progress = progress;
+            if (filepath != null) this.downloadables[index].filepath = filepath;
+            if (isPostprocessing) this.downloadables[index].state = "postprocessing";
+          },
+          onComplete: (url) => {
+            const index = this.downloadables.findIndex((x) => x.url === url);
+            // If process was exit after downloading and not after pausing
+            if (this.downloadables[index].state === "downloading" || this.downloadables[index].state === "postprocessing") {
+              this.downloadables[index].state = "completed";
+
+              this.ongoingDownloads--;
+              this.downloadFromQueue();
+            }
+          },
+        });
+      } else {
+        this.downloadables[index].state = "queued";
+        this.downloadQueue.push(url);
+      }
+    }
+
+    // TODO: This is a reactive function??
+    function progressValue(url: string) {
+      const value = downloadables.find((x) => x.url === url)?.progress?.value ?? 0;
+      return { width: `${value}%` };
+    }
+
+    function clear(url) {
+      this.pause(url);
+      const index = this.downloadables.findIndex((x) => x.url === url);
+
+      this.downloadables.splice(index, 1);
+    }
+
+    function clearCompleted() {
+      this.undo.downloadables = this.downloadables.slice();
+
+      this.downloadables.filter((x) => x.state === "completed").forEach((x) => this.clear(x.url));
+    }
+
+    function clearMany() {
+      this.undo.downloadables = this.downloadables.slice();
+
+      this.downloadables.filter((x) => x.isChosen || !this.anyChosen).forEach((x) => this.clear(x.url));
+    }
+
+    function undoClear() {
+      this.downloadables = this.undo.downloadables;
+      this.undo.downloadables = undefined;
+    }
+
+    function toggleShowMore() {
+      showMoreOptions.value = !showMoreOptions.value;
+    }
+
+    function pause(url) {
+      const index = this.downloadables.findIndex((x) => x.url === url);
+
+      if (index !== -1) {
+        if (this.downloadables[index].state === "downloading") {
+          this.downloadables[index].state = "stopped";
+          this.ongoingDownloads--;
+
+          ytdl.pause(url);
+
+          this.downloadFromQueue();
+        } else if (this.downloadables[index].state === "queued") {
+          this.downloadables[index].state = "stopped";
+          // Remove downloadable from queue
+          this.downloadQueue.splice(this.downloadQueue.indexOf(url), 1);
+        }
+      }
+    }
+
+    function downloadFromQueue() {
+      // If download queue is not empty, request download
+      if (this.downloadQueue.length !== 0) this.download(this.downloadQueue.shift());
+    }
+
+    function downloadOrPauseMany() {
+      if (this.areChosenDownloading) {
+        // Pause all chosen
+        this.downloadables.forEach((x) => {
+          if ((x.isChosen || !this.anyChosen) && x.state !== "completed") this.pause(x.url);
+        });
+      } else {
+        // Download all chosen
+        this.downloadables.forEach((x) => {
+          if ((x.isChosen || !this.anyChosen) && x.state === "stopped") this.download(x.url);
+        });
+      }
+    }
+
+    function restart(url) {
+      const index = this.downloadables.findIndex((x) => x.url === url);
+
+      this.downloadables[index].filepath = null;
+      this.downloadables[index].state = "stopped";
+      this.downloadables[index].isChosen = false;
+      this.downloadables[index].progress = {
+        value: 0,
+        size: null,
+        speed: null,
+        eta: null,
+      };
+    }
+
+    function showInFolder(filepath) {
+      console.log(filepath);
+      console.log(shell.showItemInFolder(filepath));
+    }
+
+    function openLink(link) {
+      shell.openExternal(link);
+    }
+
+    function selectDirectory() {
+      dialog.showOpenDialog(
+        remote.getCurrentWindow(),
+        {
+          properties: ["openDirectory"],
+        },
+        (filePaths) => (this.downloadLocation = filePaths[0])
+      );
+    }
+
+    function minimize() {
+      remote.getCurrentWindow().minimize();
+    }
+
+    function close() {
+      remote.getCurrentWindow().close();
+    }
+
+    function checkForUpdates() {
+      newVersionMessage.value = "loading";
+      fetch("https://api.github.com/repos/jarbun/downline/releases/latest", {
+        headers: {
+          "If-None-Match": this.etag,
+        },
+      })
+        .then(
+          function (response) {
+            if (response.status == 200) {
+              this.etag = response.headers.get("etag");
+
+              response.json().then(
+                function (data) {
+                  const currentVersion = `v${this.appVersion}`;
+                  this.latestVersion = data.tag_name;
+                  if (currentVersion == this.latestVersion) {
+                    this.newVersionMessage = "No updates available";
+                  } else {
+                    this.newVersionMessage = `New version ${this.latestVersion} available. Please download from website`;
+                  }
+                }.bind(this)
+              );
+            } else if (response.status == 304) {
+              const currentVersion = `v${this.appVersion}`;
+              if (currentVersion == this.latestVersion) {
+                this.newVersionMessage = "No updates available";
+              } else {
+                this.newVersionMessage = `New version ${this.latestVersion} available. Please download from website`;
+              }
+            }
+          }.bind(this)
+        )
+        .catch((err) => {
+          newVersionMessage.value = "";
+          console.log("Fetch Error: ", err);
+        });
+    }
+
+    function update() {
+      this.ytdlUpdateMessage = "loading";
+      this.ytdlDownloading = false;
+      ytdl.update((message, status) => {
+        this.ytdlUpdateMessage = message;
+        if (status == 1) {
+          this.ytdlDownloading = true;
+        } else {
+          this.ytdlDownloading = false;
+        }
+      });
+    }
+
     return {
       newURL,
       isExtrasOpen,
@@ -400,6 +758,7 @@ const store = new Store('store', {
       ytdlDownloading,
       undo,
 
+      // Computed
       chosenItems,
       modifiableItems,
       anyToBeDownloaded,
@@ -409,6 +768,43 @@ const store = new Store('store', {
       anyChosen,
       existsItems,
       global,
+
+      // Functions
+      isStarting,
+      isQueued,
+      isPaused,
+      isDownloading,
+      isCompleted,
+      isPostprocessing,
+      choose,
+      updateGlobals,
+      chosenQuality,
+      increment,
+      decrement,
+      updateChosenQuality,
+      updateChosenProp,
+      updateIsAudioChosen,
+      updateIsSubsChosen,
+      fetchInfo,
+      addItem,
+      download,
+      progressValue,
+      clear,
+      clearCompleted,
+      clearMany,
+      undoClear,
+      toggleShowMore,
+      pause,
+      downloadFromQueue,
+      downloadOrPauseMany,
+      restart,
+      showInFolder,
+      openLink,
+      selectDirectory,
+      minimize,
+      close,
+      checkForUpdates,
+      update,
     };
   },
 });
