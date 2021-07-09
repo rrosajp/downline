@@ -9,6 +9,8 @@
 
 We're investigating a rewrite of Downline using [Tauri](https://github.com/tauri-apps/tauri). This would allow us to ship much smaller binaries while also making sure that the software is as sandboxed as possible. 
 
+Will probably support https://github.com/yt-dlp/yt-dlp
+
 
 ## Screenshots
 <p align="center">
@@ -89,6 +91,8 @@ If you would like to build for a platform without all the extra build steps (or 
 - [electron](https://electronjs.org/)
 - [electron-builder](https://www.electron.build/)
 - [vuejs](https://vuejs.org/)
+- [vite tauri template](https://github.com/yooneskh/vite-tauri-template)
+- [tauri](https://tauri.studio/)
 
 ## Legal
 This software is distributed under the [MIT license](https://github.com/jarbun/downline/blob/master/LICENSE).
