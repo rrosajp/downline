@@ -39,10 +39,15 @@
                 class="option-icon fas"
                 :class="{ 'fa-closed-captioning': item.subtitles.length !== 0, selected: item.isSubsChosen }"
                 @dblclick.stop
-                @click.stop="updateIsSubsChosen(item)"
+                @click.stop="updateIsSubsChosen([item])"
               >
               </span>
-              <span class="option-icon fas fa-music" :class="{ selected: item.isAudioChosen }" @dblclick.stop @click.stop="updateIsAudioChosen(item)">
+              <span
+                class="option-icon fas fa-music"
+                :class="{ selected: item.isAudioChosen }"
+                @dblclick.stop
+                @click.stop="updateIsAudioChosen([item])"
+              >
               </span>
             </div>
 
@@ -94,24 +99,24 @@
             :class="[{ 'fa-pause-circle': areChosenDownloading }, { 'fa-play-circle': !areChosenDownloading }]"
           ></div>
           <span id="global-quality-select" v-if="anyToBeDownloaded">
-            <span class="fas fa-chevron-circle-left" @click="decrement(global)"></span>
-            <span id="global-quality">{{ chosenQuality(global) || "&mdash;" }}</span>
-            <span class="fas fa-chevron-circle-right" @click="increment(global)"></span>
+            <span class="fas fa-chevron-circle-left" @click="() => modifiableItems.forEach((item) => decrement(item))"></span>
+            <span id="global-quality">{{ chosenQuality(multiDownloadItem) || "&mdash;" }}</span>
+            <span class="fas fa-chevron-circle-right" @click="() => modifiableItems.forEach((item) => increment(item))"></span>
           </span>
           <span
             class="fas fa-closed-captioning"
             data-tooltip="Download Subtitles"
             v-if="anyToBeDownloaded"
-            :class="{ selected: global.isSubsChosen, hidden: !anySubbed }"
-            @click="updateChosenProp('subs')"
+            :class="{ selected: multiDownloadItem.isSubsChosen, hidden: !anySubbed }"
+            @click="updateIsSubsChosen(modifiableItems, !multiDownloadItem.isSubsChosen)"
           >
           </span>
           <span
             class="fas fa-music"
             data-tooltip="Audio Only"
             v-if="anyToBeDownloaded"
-            :class="{ selected: global.isAudioChosen }"
-            @click="updateChosenProp('audio')"
+            :class="{ selected: multiDownloadItem.isAudioChosen }"
+            @click="updateIsAudioChosen(modifiableItems, !multiDownloadItem.isSubsChosen)"
           >
           </span>
         </div>
@@ -211,7 +216,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, reactive, ref, computed } from "vue";
+import { defineComponent, reactive, ref, computed, watch } from "vue";
 import { app } from "@tauri-apps/api";
 
 // TODO: On exit (and also every once in a while) https://tauri.studio/en/docs/api/js/modules/event
@@ -241,6 +246,10 @@ interface DownloadableItem {
   isChosen: boolean;
   state: "stopped" | "completed" | string;
   isSubsChosen: boolean;
+  /**
+   * Only download audio.
+   * @default false, both video and audio will be downloaded
+   */
   isAudioChosen: boolean;
   formats: {
     video: any[];
@@ -261,6 +270,15 @@ interface DownloadableItem {
     title: string;
     index: number;
   };
+}
+
+/**
+ * Represent multiple items that can be downloaded. Used for showing a single item that lets the user configure many items simultaneously
+ */
+interface MultipleDownloadableItem {
+  isSubsChosen: boolean;
+  isAudioChosen: boolean;
+  formats: { video: any[]; audio: any[]; videoIndex: number; audioIndex: number };
 }
 
 export default defineComponent({
@@ -295,7 +313,7 @@ const store = new Store('store', {
     const audioFormats = reactive(["mp3", "aac", "flac", "m4a", "opus", "vorbis", "wav"]);
     const videoFormats = reactive(["default", "mp4", "webm", "mkv"]);
     const ongoingDownloads = ref(0);
-    const downloadQueue = reactive([]);
+    const downloadQueue = reactive<string[]>([]);
     const appVersion = ref("");
     const activeTab = ref("settings");
     const newVersionMessage = ref("");
@@ -347,11 +365,10 @@ const store = new Store('store', {
       return downloadables.length !== 0;
     });
 
-    // TODO: Fix this
-    /** A 'combined' item where one can set settings for all videos to download at the same time */
-    const global = computed(() => {
-      const globalItem = {
-        isGlobal: true,
+    // TODO: Maybe I'll need deep watchers
+    const multiDownloadItem = computed(() => {
+      const globalItem: MultipleDownloadableItem = {
+        // TODO: Do a better job at showing 'multiple different values' (e.g. 2 true, 1 false)
         isSubsChosen: modifiableItems.value.every((x) => x.subtitles.length === 0 || x.isSubsChosen),
         isAudioChosen: modifiableItems.value.every((x) => x.isAudioChosen),
         formats: {
@@ -375,6 +392,7 @@ const store = new Store('store', {
       globalItem.formats.video.sort((a, b) => a - b);
       globalItem.formats.audio.sort((a, b) => a - b);
 
+      // TODO: Do a better job at showing the 'combined' video index
       globalItem.formats.videoIndex = globalItem.formats.video.length - 1;
       globalItem.formats.audioIndex = globalItem.formats.audio.length - 1;
 
@@ -417,7 +435,7 @@ const store = new Store('store', {
       }
     }
 
-    function chosenQuality(item: DownloadableItem) {
+    function chosenQuality(item: DownloadableItem | MultipleDownloadableItem) {
       return item.isAudioChosen ? item.formats.audio[item.formats.audioIndex] : item.formats.video[item.formats.videoIndex];
     }
 
@@ -427,8 +445,6 @@ const store = new Store('store', {
       } else if (!item.isAudioChosen && item.formats.videoIndex < item.formats.video.length - 1) {
         item.formats.videoIndex++;
       }
-
-      updateChosenQuality(item);
     }
 
     function decrement(item: DownloadableItem) {
@@ -437,47 +453,18 @@ const store = new Store('store', {
       } else if (!item.isAudioChosen && item.formats.videoIndex > 0) {
         item.formats.videoIndex--;
       }
-
-      updateChosenQuality(item);
     }
 
-    function updateChosenQuality(item) {
-      // If global audio/video were modified, update audio/video of selected items
-      if (item.isGlobal) {
-        const newQuality = this.chosenQuality(this.global);
-
-        this.downloadables.forEach((x) => {
-          if (x.isChosen || !this.anyChosen) {
-            const index = item.isAudioChosen ? x.formats.audio.indexOf(newQuality) : x.formats.video.indexOf(newQuality);
-
-            if (index !== -1) {
-              if (item.isAudioChosen) x.formats.audioIndex = index;
-              else x.formats.videoIndex = index;
-            }
-          }
-        });
-      }
-      this.$forceUpdate();
-    }
-
-    function updateChosenProp(prop) {
-      if (prop === "audio") this.global.isAudioChosen = !this.global.isAudioChosen;
-      else this.global.isSubsChosen = !this.global.isSubsChosen;
-
-      this.downloadables.forEach((x) => {
-        if ((x.isChosen || !this.anyChosen) && x.state === "stopped" && x.progress.value == 0) {
-          if (prop === "audio") x.isAudioChosen = this.global.isAudioChosen;
-          else x.isSubsChosen = this.global.isSubsChosen;
-        }
+    function updateIsAudioChosen(items: DownloadableItem[], value?: boolean) {
+      items.forEach((item) => {
+        item.isAudioChosen = value !== undefined ? value : !item.isAudioChosen;
       });
     }
 
-    function updateIsAudioChosen(item: DownloadableItem) {
-      item.isAudioChosen = !item.isAudioChosen;
-    }
-
-    function updateIsSubsChosen(item: DownloadableItem) {
-      item.isSubsChosen = !item.isSubsChosen;
+    function updateIsSubsChosen(items: DownloadableItem[], value?: boolean) {
+      items.forEach((item) => {
+        item.isSubsChosen = value !== undefined ? value : !item.isSubsChosen;
+      });
     }
 
     function fetchInfo() {
@@ -486,7 +473,7 @@ const store = new Store('store', {
         isLoading.value = true;
 
         ytdl.fetchInfo({
-          urls: [this.newURL],
+          urls: [newURL.value],
           onSuccess: (info) => {
             if (info != null) this.addItem(info);
           },
@@ -496,10 +483,10 @@ const store = new Store('store', {
           },
         });
 
-        this.newURL = "";
+        newURL.value = "";
       } else {
         // Get link from clipboard
-        this.newURL = clipboard.readText();
+        newURL.value = clipboard.readText();
       }
     }
 
@@ -510,59 +497,60 @@ const store = new Store('store', {
       }
     }
 
-    function download(url) {
-      const index = this.downloadables.findIndex((x) => x.url === url);
-      const item = this.downloadables[index];
-      // Stop if an invalid quality is chosen
-      if (this.chosenQuality(item) == null) return;
+    function download(url: string | undefined) {
+      if (url === undefined) return;
 
-      if (this.ongoingDownloads < this.maxSimultaneous) {
-        this.downloadables[index].state = "downloading";
+      const item = downloadables.find((x) => x.url === url);
+      if (!item) return;
+
+      // Stop if an invalid quality is chosen
+      if (chosenQuality(item) == null) return;
+
+      if (ongoingDownloads.value < maxSimultaneous.value) {
+        item.state = "downloading";
 
         let outputFormat;
-        if (this.downloadables[index].playlist.exists && this.autonumberItems) {
-          outputFormat = path.join(
-            this.downloadLocation,
-            this.downloadables[index].playlist.title,
-            `${this.downloadables[index].playlist.index} - %(title)s.%(ext)s`
-          );
-          this.downloadables[index].filepath = path.join(this.downloadLocation, this.downloadables[index].playlist.title, "*");
-        } else if (this.downloadables[index].playlist.exists) {
-          outputFormat = path.join(this.downloadLocation, this.downloadables[index].playlist.title, "%(title)s.%(ext)s");
-          this.downloadables[index].filepath = path.join(this.downloadLocation, this.downloadables[index].playlist.title, "*");
+        if (item.playlist.exists && autonumberItems.value) {
+          outputFormat = path.join(downloadLocation.value, item.playlist.title, `${item.playlist.index} - %(title)s.%(ext)s`);
+          item.filepath = path.join(downloadLocation.value, item.playlist.title, "*");
+        } else if (item.playlist.exists) {
+          outputFormat = path.join(downloadLocation.value, item.playlist.title, "%(title)s.%(ext)s");
+          item.filepath = path.join(downloadLocation.value, item.playlist.title, "*");
         } else {
-          outputFormat = path.join(this.downloadLocation, "%(title)s.%(ext)s");
-          this.downloadables[index].filepath = path.join(this.downloadLocation, "*");
+          outputFormat = path.join(downloadLocation.value, "%(title)s.%(ext)s");
+          item.filepath = path.join(downloadLocation.value, "*");
         }
 
-        this.ongoingDownloads++;
+        ongoingDownloads.value++;
 
         ytdl.download({
           item: item,
           outputFormat: outputFormat,
-          audioFormat: this.audioFormats[this.audioFormatIndex],
-          videoFormat: this.videoFormats[this.videoFormatIndex],
+          audioFormat: audioFormats[audioFormatIndex.value],
+          videoFormat: videoFormats[videoFormatIndex.value],
           onStart: () => console.log("Download Started"),
           onDownload: (url, { progress, filepath, isPostprocessing }) => {
-            const index = this.downloadables.findIndex((x) => x.url === url);
-            if (progress != null) this.downloadables[index].progress = progress;
-            if (filepath != null) this.downloadables[index].filepath = filepath;
-            if (isPostprocessing) this.downloadables[index].state = "postprocessing";
+            const item = downloadables.find((x) => x.url === url);
+            if (!item) return;
+            if (progress != null) item.progress = progress;
+            if (filepath != null) item.filepath = filepath;
+            if (isPostprocessing) item.state = "postprocessing";
           },
           onComplete: (url) => {
-            const index = this.downloadables.findIndex((x) => x.url === url);
+            const item = downloadables.find((x) => x.url === url);
+            if (!item) return;
             // If process was exit after downloading and not after pausing
-            if (this.downloadables[index].state === "downloading" || this.downloadables[index].state === "postprocessing") {
-              this.downloadables[index].state = "completed";
+            if (item.state === "downloading" || item.state === "postprocessing") {
+              item.state = "completed";
 
-              this.ongoingDownloads--;
-              this.downloadFromQueue();
+              ongoingDownloads.value--;
+              downloadFromQueue();
             }
           },
         });
       } else {
-        this.downloadables[index].state = "queued";
-        this.downloadQueue.push(url);
+        item.state = "queued";
+        downloadQueue.push(url);
       }
     }
 
@@ -602,42 +590,38 @@ const store = new Store('store', {
       showMoreOptions.value = !showMoreOptions.value;
     }
 
-    function pause(url) {
-      const index = this.downloadables.findIndex((x) => x.url === url);
+    function pause(url: string) {
+      const item = downloadables.find((x) => x.url === url);
+      if (!item) return;
+      if (item.state === "downloading") {
+        item.state = "stopped";
+        ongoingDownloads.value--;
 
-      if (index !== -1) {
-        if (this.downloadables[index].state === "downloading") {
-          this.downloadables[index].state = "stopped";
-          this.ongoingDownloads--;
+        ytdl.pause(url);
 
-          ytdl.pause(url);
-
-          this.downloadFromQueue();
-        } else if (this.downloadables[index].state === "queued") {
-          this.downloadables[index].state = "stopped";
-          // Remove downloadable from queue
-          this.downloadQueue.splice(this.downloadQueue.indexOf(url), 1);
-        }
+        downloadFromQueue();
+      } else if (item.state === "queued") {
+        item.state = "stopped";
+        // Remove downloadable from queue
+        downloadQueue.splice(downloadQueue.indexOf(url), 1);
       }
     }
 
     function downloadFromQueue() {
       // If download queue is not empty, request download
-      if (downloadQueue.length !== 0) {
-        download(downloadQueue.shift());
-      }
+      download(downloadQueue.shift());
     }
 
     function downloadOrPauseMany() {
       if (areChosenDownloading.value) {
         // Pause all chosen
-        this.downloadables.forEach((x) => {
-          if ((x.isChosen || !this.anyChosen) && x.state !== "completed") this.pause(x.url);
+        downloadables.forEach((x) => {
+          if ((x.isChosen || !anyChosen.value) && x.state !== "completed") pause(x.url);
         });
       } else {
         // Download all chosen
-        this.downloadables.forEach((x) => {
-          if ((x.isChosen || !this.anyChosen) && x.state === "stopped") this.download(x.url);
+        downloadables.forEach((x) => {
+          if ((x.isChosen || !anyChosen.value) && x.state === "stopped") download(x.url);
         });
       }
     }
@@ -684,35 +668,36 @@ const store = new Store('store', {
       remote.getCurrentWindow().close();
     }
 
+    // TODO: Not needed, because Tauri has a built-in updater
     function checkForUpdates() {
       newVersionMessage.value = "loading";
       fetch("https://api.github.com/repos/jarbun/downline/releases/latest", {
         headers: {
-          "If-None-Match": this.etag,
+          "If-None-Match": etag.value,
         },
       })
         .then(
           function (response) {
             if (response.status == 200) {
-              this.etag = response.headers.get("etag");
+              etag.value = response.headers.get("etag");
 
               response.json().then(
                 function (data) {
-                  const currentVersion = `v${this.appVersion}`;
-                  this.latestVersion = data.tag_name;
-                  if (currentVersion == this.latestVersion) {
-                    this.newVersionMessage = "No updates available";
+                  const currentVersion = `v${appVersion.value}`;
+                  latestVersion.value = data.tag_name;
+                  if (currentVersion == latestVersion.value) {
+                    newVersionMessage.value = "No updates available";
                   } else {
-                    this.newVersionMessage = `New version ${this.latestVersion} available. Please download from website`;
+                    newVersionMessage.value = `New version ${latestVersion.value} available. Please download from website`;
                   }
                 }.bind(this)
               );
             } else if (response.status == 304) {
-              const currentVersion = `v${this.appVersion}`;
-              if (currentVersion == this.latestVersion) {
-                this.newVersionMessage = "No updates available";
+              const currentVersion = `v${appVersion.value}`;
+              if (currentVersion == latestVersion.value) {
+                newVersionMessage.value = "No updates available";
               } else {
-                this.newVersionMessage = `New version ${this.latestVersion} available. Please download from website`;
+                newVersionMessage.value = `New version ${latestVersion.value} available. Please download from website`;
               }
             }
           }.bind(this)
@@ -724,8 +709,8 @@ const store = new Store('store', {
     }
 
     function update() {
-      this.ytdlUpdateMessage = "loading";
-      this.ytdlDownloading = false;
+      ytdlUpdateMessage.value = "loading";
+      ytdlDownloading.value = false;
       ytdl.update((message, status) => {
         this.ytdlUpdateMessage = message;
         if (status == 1) {
@@ -769,7 +754,7 @@ const store = new Store('store', {
       anyCompleted,
       anyChosen,
       existsItems,
-      global,
+      multiDownloadItem,
 
       // Functions
       isStarting,
@@ -782,8 +767,6 @@ const store = new Store('store', {
       chosenQuality,
       increment,
       decrement,
-      updateChosenQuality,
-      updateChosenProp,
       updateIsAudioChosen,
       updateIsSubsChosen,
       fetchInfo,
