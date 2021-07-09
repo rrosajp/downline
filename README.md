@@ -1,7 +1,7 @@
 # Downline
 ![GitHub All Releases](https://img.shields.io/github/downloads/jarbun/downline/total.svg)
 
-[Downline](https://jarbun.github.io/downline/) is a free, cross-platform desktop application for downloading video and audio from YouTube and many other sites. Works on Windows, MacOS and Linux.
+[Downline](https://jarbun.github.io/downline/) is a free, cross-platform desktop application for downloading video and audio from YouTube and many other sites. It is a frontend for youtube-dl. Works on Windows, MacOS and Linux.
 
 **Download the latest version [here](https://github.com/jarbun/downline/releases/latest)**.
 
