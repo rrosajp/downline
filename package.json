@@ -6,6 +6,7 @@
   "homepage": "https://github.com/stefnotch/downline",
   "license": "MIT",
   "scripts": {
+    "start": "tauri dev",
     "dev": "tauri dev",
     "tauri": "tauri"
   },

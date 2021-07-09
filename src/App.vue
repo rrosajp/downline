@@ -124,9 +124,9 @@
       </section>
 
       <div id="messages">
-        <span id="loading-indicator">
-          <span class="spinner hidden"></span>
-          <span class="hidden">Loading</span>
+        <span id="loading-indicator" :class="{ hidden: !isLoading }">
+          <span class="spinner"></span>
+          <span class="">Loading</span>
         </span>
         <span id="show-hide" @click="toggleShowMore">
           <span class="fas fa-angle-up" :class="{ 'rotate-arrow': showMoreOptions }"></span>
@@ -212,8 +212,9 @@
 
 <script lang="ts">
 import { defineComponent, reactive, ref, computed } from "vue";
+import { app } from "@tauri-apps/api";
 
-// TODO: On exit
+// TODO: On exit (and also every once in a while) https://tauri.studio/en/docs/api/js/modules/event
 /*
 
 // Save Data
@@ -295,14 +296,17 @@ const store = new Store('store', {
     const videoFormats = reactive(["default", "mp4", "webm", "mkv"]);
     const ongoingDownloads = ref(0);
     const downloadQueue = reactive([]);
-    const appVersion = ref(""); // TODO: Put version heer
+    const appVersion = ref("");
     const activeTab = ref("settings");
     const newVersionMessage = ref("");
     const ytdlUpdateMessage = ref("");
     const ytdlDownloading = ref(false);
     const undo = reactive({
-      downloadables: undefined,
+      downloadables: undefined as undefined | DownloadableItem[],
     });
+    const isLoading = ref(false);
+
+    app.getVersion().then((version) => (appVersion.value = version));
 
     /**  Returns selected items if any, otherwise all items, that are not yet complete */
     const chosenItems = computed(() => {
@@ -311,13 +315,11 @@ const store = new Store('store', {
 
     /**  Returns items that are yet to be downloaded */
     const modifiableItems = computed(() => {
-      // @ts-ignore
       return chosenItems.value.filter((x) => x.state === "stopped" && x.progress?.value == 0);
     });
 
     /** Returns true if any modifiable items are to be downloaded */
     const anyToBeDownloaded = computed(() => {
-      // @ts-ignore
       return chosenItems.value.some((x) => x.state === "stopped" && x.progress?.value == 0);
     });
 
@@ -345,11 +347,13 @@ const store = new Store('store', {
       return downloadables.length !== 0;
     });
 
+    // TODO: Fix this
+    /** A 'combined' item where one can set settings for all videos to download at the same time */
     const global = computed(() => {
-      let global = {
+      const globalItem = {
         isGlobal: true,
-        isSubsChosen: false,
-        isAudioChosen: false,
+        isSubsChosen: modifiableItems.value.every((x) => x.subtitles.length === 0 || x.isSubsChosen),
+        isAudioChosen: modifiableItems.value.every((x) => x.isAudioChosen),
         formats: {
           video: [] as any[],
           audio: [] as any[],
@@ -360,21 +364,21 @@ const store = new Store('store', {
 
       // Set audio and video to union of all audio and video formats
       modifiableItems.value.forEach((x) => {
-        global.formats.video.push(...x.formats.video);
-        global.formats.audio.push(...x.formats.audio);
+        globalItem.formats.video.push(...x.formats.video);
+        globalItem.formats.audio.push(...x.formats.audio);
       });
 
-      global.formats.video = Array.from(new Set(global.formats.video));
-      global.formats.audio = Array.from(new Set(global.formats.audio));
+      globalItem.formats.video = Array.from(new Set(globalItem.formats.video));
+      globalItem.formats.audio = Array.from(new Set(globalItem.formats.audio));
 
       // Sort in ascending order
-      global.formats.video.sort((a, b) => a - b);
-      global.formats.audio.sort((a, b) => a - b);
+      globalItem.formats.video.sort((a, b) => a - b);
+      globalItem.formats.audio.sort((a, b) => a - b);
 
-      global.formats.videoIndex = global.formats.video.length - 1;
-      global.formats.audioIndex = global.formats.audio.length - 1;
+      globalItem.formats.videoIndex = globalItem.formats.video.length - 1;
+      globalItem.formats.audioIndex = globalItem.formats.audio.length - 1;
 
-      return global;
+      return globalItem;
     });
 
     function isStarting(item: DownloadableItem) {
@@ -411,12 +415,6 @@ const store = new Store('store', {
         showMoreOptions.value = false;
         downloadables.forEach((x) => (x.isChosen = false));
       }
-      updateGlobals();
-    }
-
-    function updateGlobals() {
-      this.global.isAudioChosen = this.modifiableItems.every((x) => x.isAudioChosen);
-      this.global.isSubsChosen = this.modifiableItems.every((x) => x.subtitles.length === 0 || x.isSubsChosen);
     }
 
     function chosenQuality(item: DownloadableItem) {
@@ -474,22 +472,18 @@ const store = new Store('store', {
       });
     }
 
-    function updateIsAudioChosen(item) {
+    function updateIsAudioChosen(item: DownloadableItem) {
       item.isAudioChosen = !item.isAudioChosen;
-      // Update global if necessary
-      this.global.isAudioChosen = this.modifiableItems.every((x) => x.isAudioChosen);
     }
 
-    function updateIsSubsChosen(item) {
+    function updateIsSubsChosen(item: DownloadableItem) {
       item.isSubsChosen = !item.isSubsChosen;
-      // Update global if necessary
-      this.global.isSubsChosen = this.modifiableItems.every((x) => x.subtitles.length === 0 || x.isSubsChosen);
     }
 
     function fetchInfo() {
-      if (this.newURL.trim().length !== 0) {
+      if (newURL.value.trim().length !== 0) {
         // Load link if url field is not empty
-        document.querySelectorAll("#loading-indicator span").forEach((x) => x.classList.remove("hidden"));
+        isLoading.value = true;
 
         ytdl.fetchInfo({
           urls: [this.newURL],
@@ -497,7 +491,9 @@ const store = new Store('store', {
             if (info != null) this.addItem(info);
           },
           onError: (err) => console.log(err),
-          onExit: () => document.querySelectorAll("#loading-indicator span").forEach((x) => x.classList.add("hidden")),
+          onExit: () => {
+            isLoading.value = false;
+          },
         });
 
         this.newURL = "";
@@ -576,28 +572,30 @@ const store = new Store('store', {
       return { width: `${value}%` };
     }
 
-    function clear(url) {
-      this.pause(url);
-      const index = this.downloadables.findIndex((x) => x.url === url);
+    function clear(url: string) {
+      pause(url);
+      const index = downloadables.findIndex((x) => x.url === url);
 
-      this.downloadables.splice(index, 1);
+      downloadables.splice(index, 1);
     }
 
     function clearCompleted() {
-      this.undo.downloadables = this.downloadables.slice();
+      undo.downloadables = downloadables.slice();
 
-      this.downloadables.filter((x) => x.state === "completed").forEach((x) => this.clear(x.url));
+      downloadables.filter((x) => x.state === "completed").forEach((x) => clear(x.url));
     }
 
     function clearMany() {
-      this.undo.downloadables = this.downloadables.slice();
+      undo.downloadables = downloadables.slice();
 
-      this.downloadables.filter((x) => x.isChosen || !this.anyChosen).forEach((x) => this.clear(x.url));
+      downloadables.filter((x) => x.isChosen || !anyChosen.value).forEach((x) => clear(x.url));
     }
 
     function undoClear() {
-      this.downloadables = this.undo.downloadables;
-      this.undo.downloadables = undefined;
+      if (undo.downloadables !== undefined) {
+        downloadables.push(...undo.downloadables);
+        undo.downloadables = undefined;
+      }
     }
 
     function toggleShowMore() {
@@ -625,11 +623,13 @@ const store = new Store('store', {
 
     function downloadFromQueue() {
       // If download queue is not empty, request download
-      if (this.downloadQueue.length !== 0) this.download(this.downloadQueue.shift());
+      if (downloadQueue.length !== 0) {
+        download(downloadQueue.shift());
+      }
     }
 
     function downloadOrPauseMany() {
-      if (this.areChosenDownloading) {
+      if (areChosenDownloading.value) {
         // Pause all chosen
         this.downloadables.forEach((x) => {
           if ((x.isChosen || !this.anyChosen) && x.state !== "completed") this.pause(x.url);
@@ -642,17 +642,18 @@ const store = new Store('store', {
       }
     }
 
-    function restart(url) {
-      const index = this.downloadables.findIndex((x) => x.url === url);
+    function restart(url: string) {
+      const item = downloadables.find((x) => x.url === url);
+      if (!item) return;
 
-      this.downloadables[index].filepath = null;
-      this.downloadables[index].state = "stopped";
-      this.downloadables[index].isChosen = false;
-      this.downloadables[index].progress = {
+      item.filepath = undefined;
+      item.state = "stopped";
+      item.isChosen = false;
+      item.progress = {
         value: 0,
-        size: null,
-        speed: null,
-        eta: null,
+        size: undefined,
+        speed: undefined,
+        eta: undefined,
       };
     }
 
@@ -757,6 +758,7 @@ const store = new Store('store', {
       ytdlUpdateMessage,
       ytdlDownloading,
       undo,
+      isLoading,
 
       // Computed
       chosenItems,
@@ -777,7 +779,6 @@ const store = new Store('store', {
       isCompleted,
       isPostprocessing,
       choose,
-      updateGlobals,
       chosenQuality,
       increment,
       decrement,
