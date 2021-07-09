@@ -1,26 +1,20 @@
 {
+  "package": {
+    "productName": "downline",
+    "version": "3.0.0"
+  },
   "build": {
-    "distDir": "../src",
+    "distDir": "../dist",
     "devPath": "../src",
     "beforeDevCommand": "",
     "beforeBuildCommand": ""
   },
-  "ctx": {},
   "tauri": {
-    "embeddedServer": {
-      "active": false
-    },
     "bundle": {
       "active": true,
       "targets": "all",
       "identifier": "com.tauri.dev",
-      "icon": [
-        "icons/32x32.png",
-        "icons/128x128.png",
-        "icons/128x128@2x.png",
-        "icons/icon.icns",
-        "icons/icon.ico"
-      ],
+      "icon": ["icons/32x32.png", "icons/128x128.png", "icons/icon.png", "icons/icon.icns", "icons/icon.ico"],
       "resources": [],
       "externalBin": [],
       "copyright": "",
@@ -31,28 +25,48 @@
         "depends": [],
         "useBootstrapper": false
       },
-      "osx": {
+      "macOS": {
         "frameworks": [],
         "minimumSystemVersion": "",
-        "useBootstrapper": false
+        "useBootstrapper": false,
+        "exceptionDomain": "",
+        "signingIdentity": null,
+        "entitlements": null
       },
-      "exceptionDomain": ""
+      "windows": {
+        "certificateThumbprint": null,
+        "digestAlgorithm": "sha256",
+        "timestampUrl": ""
+      }
+    },
+    "updater": {
+      "active": false
     },
     "allowlist": {
-      "event": true
+      "all": false,
+      "shell": {
+        "execute": false,
+        "open": false
+      },
+      "fs": {
+        "readTextFile": false,
+        "writeFile": false
+      }
     },
-    "window": {
-      "title": "Downline",
-      "width": 800,
-      "height": 600,
-      "resizable": true,
-      "fullscreen": false
-    },
+    "windows": [
+      {
+        "title": "downline",
+        "width": 460,
+        "height": 530,
+        "resizable": true,
+        "fullscreen": false,
+        "minWidth": 420,
+        "minHeight": 500,
+        "fileDropEnabled": false
+      }
+    ],
     "security": {
-      "csp": "default-src blob: data: filesystem: ws: http: https: 'unsafe-eval' 'unsafe-inline'"
-    },
-    "inliner": {
-      "active": true
+      "csp": "default-src blob: data: filesystem: ws: wss: http: https: tauri: 'unsafe-eval' 'unsafe-inline' 'self' img-src: 'self'"
     }
   }
 }

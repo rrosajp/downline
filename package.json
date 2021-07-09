@@ -4,15 +4,20 @@
   "version": "3.0.0",
   "description": "A cross-platform video and audio downloader for YouTube, Vimeo, Dailymotion, SoundCloud and many other sites",
   "homepage": "https://github.com/stefnotch/downline",
+  "license": "MIT",
   "scripts": {
     "dev": "tauri dev",
     "tauri": "tauri"
   },
-  "license": "MIT",
   "dependencies": {
-    "tauri": "^0.12.0"
+    "@tauri-apps/api": "^1.0.0-beta.4",
+    "vue": "3.1.4"
   },
   "devDependencies": {
-    "cross-env": "^7.0.2"
+    "@tauri-apps/cli": "^1.0.0-beta.5",
+    "@vitejs/plugin-vue": "^1.2.4",
+    "@vue/compiler-sfc": "^3.1.4",
+    "cross-env": "^7.0.3",
+    "vite": "^2.4.1"
   }
 }
