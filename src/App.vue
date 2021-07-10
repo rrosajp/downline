@@ -2,8 +2,7 @@
   <section id="titlebar">
     <span class="fas" :class="[{ 'fa-cog': !isExtrasOpen }, { 'fa-arrow-left': isExtrasOpen }]" @click="isExtrasOpen = !isExtrasOpen"></span>
     <h1>Downline</h1>
-    <span id="minimize-btn" @click="minimize">&minus;</span>
-    <span id="close-btn" @click="close">&times;</span>
+    <span></span>
   </section>
 
   <section id="main-page">
@@ -219,6 +218,10 @@
 import { defineComponent, reactive, ref, computed, watch } from "vue";
 import { app } from "@tauri-apps/api";
 
+// TODO: If youtube-dl or ffmpeg are missing: show a download/browse dialog
+// TODO: Get ytdl.js to work (Javascript for now)
+// TODO: Get store.js to work (Javascript, but the actual saving & loading happens async in Rust)
+
 // TODO: On exit (and also every once in a while) https://tauri.studio/en/docs/api/js/modules/event
 /*
 
@@ -236,7 +239,6 @@ ipcRenderer.on('save', event => {
   ipcRenderer.send('quit');
 });*/
 
-// TODO: Finish this interface
 interface DownloadableItem {
   url: string;
   filepath?: string;
@@ -660,14 +662,6 @@ const store = new Store('store', {
       );
     }
 
-    function minimize() {
-      remote.getCurrentWindow().minimize();
-    }
-
-    function close() {
-      remote.getCurrentWindow().close();
-    }
-
     // TODO: Not needed, because Tauri has a built-in updater
     function checkForUpdates() {
       newVersionMessage.value = "loading";
@@ -785,8 +779,6 @@ const store = new Store('store', {
       showInFolder,
       openLink,
       selectDirectory,
-      minimize,
-      close,
       checkForUpdates,
       update,
     };
