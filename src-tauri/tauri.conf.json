@@ -46,11 +46,15 @@
       "all": false,
       "shell": {
         "execute": false,
-        "open": false
+        "open": true
       },
       "fs": {
         "readTextFile": false,
-        "writeFile": false
+        "writeFile": false,
+        "path": true
+      },
+      "dialog": {
+        "open": true
       }
     },
     "windows": [

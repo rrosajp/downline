@@ -1,15 +1,15 @@
-#extras{
+#extras {
   height: calc(100vh - 30px);
   background-color: var(--background);
   color: white;
   font-size: 15px;
 }
 
-#extras button{
+#extras button {
   line-height: 25px;
 }
 
-#tabs{
+#tabs {
   display: flex;
   list-style: none;
   height: 30px;
@@ -17,13 +17,13 @@
   margin: 0;
 }
 
-#tabs li{
+#tabs li {
   background-color: var(--black-dark);
   font-weight: 500;
   text-transform: uppercase;
   font-size: 14px;
   letter-spacing: 0.6px;
-  width: calc(100%/2);
+  width: calc(100% / 2);
   height: 30px;
   line-height: 30px;
   text-align: center;
@@ -31,190 +31,190 @@
   user-select: none;
 }
 
-#tabs li:hover{
+#tabs li:hover {
   background-color: var(--black-hover);
 }
 
-#tabs li.active{
+#tabs li.active {
   background-color: var(--background);
 }
 
-#extras div{
+#extras div {
   background-color: var(--background);
 }
 
 /* ----- Settings Page ----- */
-#settings{
+#settings {
   padding: 10px;
 }
 
-#settings label{
+#settings label {
   user-select: none;
 }
 
-#settings label small{
+#settings label small {
   color: var(--gray-light);
   font-size: 14px;
   font-weight: 400;
 }
 
 /* Download Location */
-#download-location{
+#download-location {
   display: flex;
   flex-direction: column;
   padding-bottom: 20px;
 }
 
-#download-location div{
+#download-location div {
   display: flex;
 }
 
-#location-text{
+#location-text {
   color: var(--gray-light);
   flex-grow: 1;
   align-self: center;
 }
 
-#choose-location{
+#choose-location {
   width: 80px;
   border-radius: 40px;
   color: white;
   background-color: var(--blue-dark);
 }
 
-#choose-location:hover{
+#choose-location:hover {
   background-color: var(--blue-light);
 }
 
-#choose-location:active{
+#choose-location:active {
   background-color: var(--blue-dark);
 }
 
 /* Simultaneous Downloads */
-#max-simultaneous{
+#max-simultaneous {
   display: flex;
   flex-direction: column;
   padding-bottom: 20px;
 }
 
-#max-simultaneous div{
-  user-select: none; 
-  display: flex; 
-  width: 55px; 
+#max-simultaneous div {
+  user-select: none;
+  display: flex;
+  width: 55px;
   margin-top: 5px;
 }
 
-#max-simultaneous .fas{
+#max-simultaneous .fas {
   color: var(--black-light);
   align-self: center;
 }
-#max-simultaneous .fas:hover{
+#max-simultaneous .fas:hover {
   color: var(--gray-dark);
 }
-#max-simultaneous .fas:active{
+#max-simultaneous .fas:active {
   color: var(--black-light);
 }
 
-#max-simultaneous-text{
-  width: 35px; 
-  text-align: center; 
+#max-simultaneous-text {
+  width: 35px;
+  text-align: center;
   line-height: 100%;
   font-weight: 500;
 }
 
 /* Autonumber Items */
-#autonumber-items{
+#autonumber-items {
   display: flex;
   padding-bottom: 20px;
 }
 
-#autonumber-items .fas{
+#autonumber-items .fas {
   font-size: 18px;
   margin-right: 5px;
 }
 
-#autonumber-items label{
+#autonumber-items label {
   cursor: pointer;
   align-self: center;
 }
 
 /* Audio Format */
-.formats{
+.formats {
   padding-bottom: 20px;
   user-select: none;
 }
 
-.formats div{
-  user-select: none; 
-  display: flex; 
-  width: 100px; 
+.formats div {
+  user-select: none;
+  display: flex;
+  width: 100px;
   margin-top: 5px;
 }
 
-.format-text{
+.format-text {
   width: 60px;
-  text-align: center; 
+  text-align: center;
   line-height: 100%;
   font-weight: 500;
 }
 
-.formats .fas{
+.formats .fas {
   color: var(--black-light);
   align-self: center;
 }
-.formats .fas:hover{
+.formats .fas:hover {
   color: var(--gray-dark);
 }
-.formats .fas:active{
+.formats .fas:active {
   color: var(--black-light);
 }
 
 /* ----- About Page ----- */
-#about{
+#about {
   padding: 10px;
   user-select: none;
 }
 
-#about header{
+#about header {
   display: flex;
   width: 150px;
   margin: 0 auto 5px auto;
   cursor: pointer;
 }
 
-#about header img{
+#about header img {
   width: 35px;
   height: 35px;
 }
 
-#about header span{
+#about header span {
   font-weight: 500;
   font-size: 18px;
   line-height: 35px;
   margin-left: 10px;
   letter-spacing: 0.3px;
 }
-#about header span:hover{
+#about header span:hover {
   text-decoration: underline;
 }
 
-#app-version{
+#app-version {
   padding-top: 5px;
   letter-spacing: 0.3px;
   text-align: center;
 }
 
-#app-version strong{
+#app-version strong {
   font-weight: 500;
 }
 
-#about p{
+#about p {
   text-align: center;
   font-size: 15.5px;
   margin: 10px 0 5px 0;
 }
 
-#author{
+#author-list {
   letter-spacing: 0.3px;
   text-align: center;
   color: var(--gray-light);
@@ -222,15 +222,15 @@
   cursor: pointer;
 }
 
-#author strong{
+strong.author {
   font-weight: 500;
 }
 
-#author:hover{
+.author:hover {
   text-decoration: underline;
 }
 
-#about button{
+#about button {
   padding: 0 5px;
   display: block;
   border-radius: 40px;
@@ -239,20 +239,20 @@
   background-color: var(--blue-dark);
   min-width: 180px;
 }
-#about button:hover{
+#about button:hover {
   background-color: var(--blue-light);
 }
-#about button:active{
+#about button:active {
   background-color: var(--blue-dark);
 }
 
-#about button .spinner{
+#about button .spinner {
   margin-right: 2px;
   border-left-color: white;
   top: 3px;
 }
 
-.update-message{
+.update-message {
   text-align: center;
   display: block;
   color: #bbb;

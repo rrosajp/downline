@@ -150,7 +150,7 @@
       <div id="download-location">
         <label>Download Location</label>
         <div>
-          <span id="location-text">{{ downloadLocation }}</span>
+          <span id="location-text">{{ store.data.downloadLocation }}</span>
           <button id="choose-location" @click="selectDirectory">Browse</button>
         </div>
       </div>
@@ -197,7 +197,10 @@
         <strong>{{ appVersion }}</strong>
       </div>
       <p>Free and open-source media downloader for YouTube and many other sites</p>
-      <div id="author" @click="openLink('https://github.com/jarbun')">Created by <strong>Arjun B</strong></div>
+      <div id="author-list">
+        Created by <strong @click="openLink('https://github.com/jarbun')" class="author">Arjun B</strong> and
+        <strong @click="openLink('https://github.com/stefnotch')" class="author">Stefnotch</strong>
+      </div>
 
       <button @click="checkForUpdates">
         <span class="spinner" v-show="newVersionMessage == 'loading'"></span>
@@ -216,7 +219,7 @@
 
 <script lang="ts">
 import { defineComponent, reactive, ref, computed, watch, toRef } from "vue";
-import { app, event, shell } from "@tauri-apps/api";
+import { app, event, shell, path, dialog } from "@tauri-apps/api";
 import { useStore } from "./store";
 
 // TODO: If youtube-dl or ffmpeg are missing: show a download/browse dialog
@@ -274,11 +277,17 @@ interface MultipleDownloadableItem {
 
 const store = useStore("store", app.getVersion(), {
   downloadables: [],
-  downloadLocation: "../",
+  downloadLocation: "",
   maxSimultaneous: 2,
   autonumberItems: false,
   audioFormatIndex: 0,
   videoFormatIndex: 0,
+});
+
+path.downloadDir().then((dir) => {
+  if (store.data.downloadLocation == "") {
+    store.data.downloadLocation = dir;
+  }
 });
 
 export default defineComponent({
@@ -631,22 +640,25 @@ const ytdl = new YTDL();
 
     function showInFolder(filepath: string | undefined) {
       if (filepath === undefined) return;
+      // TODO: Not allowed!
       // TODO: Replace this with something more rock-solid
       return shell.open(filepath.substring(0, filepath.lastIndexOf("/")));
     }
 
     function openLink(link: string) {
+      // TODO: Not allowed!
       return shell.open(link);
     }
 
     function selectDirectory() {
-      dialog.showOpenDialog(
-        remote.getCurrentWindow(),
-        {
-          properties: ["openDirectory"],
-        },
-        (filePaths) => (this.downloadLocation = filePaths[0])
-      );
+      dialog
+        .open({
+          directory: true,
+          defaultPath: store.data.downloadLocation,
+        })
+        .then((dir) => {
+          store.data.downloadLocation = Array.isArray(dir) ? dir[0] : dir;
+        });
     }
 
     // TODO: Not needed, because Tauri has a built-in updater
@@ -705,11 +717,12 @@ const ytdl = new YTDL();
     }
 
     return {
+      store,
+
       newURL,
       isExtrasOpen,
       showMoreOptions,
       downloadables,
-      downloadLocation,
       maxSimultaneous,
       autonumberItems,
       audioFormatIndex,
