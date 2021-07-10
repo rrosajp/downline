@@ -221,49 +221,19 @@
 import { defineComponent, reactive, ref, computed, watch, toRef } from "vue";
 import { app, event, shell, path, dialog } from "@tauri-apps/api";
 import { useStore } from "./store";
+import { DownloadableItem } from "./ytdl";
 
 // TODO: If youtube-dl or ffmpeg are missing: show a download/browse dialog
 // TODO: Get ytdl.js to work (Javascript for now)
-// TODO: Get store.js to work (Javascript, but the actual saving & loading happens async in Rust)
+// TODO: Figure out the deal with those audio & video formats
+// TODO: Finish hooking up the store (store.get('downloadables') and co.)
+
+// TODO: Auto-updater
+// TODO: Clipboard
 
 event.listen("tauri://close-requested", () => {
   store.save();
 });
-
-interface DownloadableItem {
-  url: string;
-  filepath?: string;
-  title: string;
-  thumbnail?: string;
-  duration: string;
-  isChosen: boolean;
-  state: "stopped" | "completed" | string;
-  isSubsChosen: boolean;
-  /**
-   * Only download audio.
-   * @default false, both video and audio will be downloaded
-   */
-  isAudioChosen: boolean;
-  formats: {
-    video: any[];
-    audio: any[];
-    videoIndex: number;
-    audioIndex: number;
-  };
-  subtitles: string[];
-  progress: {
-    value: number;
-    size?: string;
-    speed?: string;
-    eta?: string;
-  };
-  playlist: {
-    exists: boolean;
-    entries: number;
-    title: string;
-    index: number;
-  };
-}
 
 /**
  * Represent multiple items that can be downloaded. Used for showing a single item that lets the user configure many items simultaneously

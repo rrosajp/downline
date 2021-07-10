@@ -1,6 +1,7 @@
 import { throttle } from "@github/mini-throttle";
 import { reactive, ref, Ref, toRaw, toRef, watch } from "vue";
 import { invoke } from "@tauri-apps/api/tauri";
+import { DownloadableItem } from "./ytdl";
 
 // This is what migration functions will look like
 // We could keep the old types around, but we don't need to
@@ -12,10 +13,10 @@ function migrate3_0_0to3_0_0(data: any) {
 // - Async loading should be supported
 // - Saving happens in async
 // - Version numbers
-// - Individual keys can be ref-ed
+// - Individual keys can be accessed reactively
 
 export type StoreData = {
-  downloadables: any[]; // TODO:
+  downloadables: DownloadableItem[];
   downloadLocation: string;
   maxSimultaneous: number;
   autonumberItems: boolean;
