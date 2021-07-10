@@ -215,29 +215,18 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, reactive, ref, computed, watch } from "vue";
-import { app } from "@tauri-apps/api";
+import { defineComponent, reactive, ref, computed, watch, toRef } from "vue";
+import { app, event, shell } from "@tauri-apps/api";
+import { useStore } from "./store";
 
 // TODO: If youtube-dl or ffmpeg are missing: show a download/browse dialog
 // TODO: Get ytdl.js to work (Javascript for now)
 // TODO: Get store.js to work (Javascript, but the actual saving & loading happens async in Rust)
 
 // TODO: On exit (and also every once in a while) https://tauri.studio/en/docs/api/js/modules/event
-/*
-
-// Save Data
-ipcRenderer.on('save', event => {
-  store.set('downloadables', vm.downloadables);
-  store.set('downloadLocation', vm.downloadLocation);
-  store.set('maxSimultaneous', vm.maxSimultaneous);
-  store.set('autonumberItems', vm.autonumberItems);
-  store.set('etag', vm.etag);
-  store.set('latestVersion', vm.latestVersion);
-  store.set('audioFormatIndex', vm.audioFormatIndex);
-  store.set('videoFormatIndex', vm.videoFormatIndex);
-
-  ipcRenderer.send('quit');
-});*/
+event.listen("tauri://close-requested", () => {
+  store.save();
+});
 
 interface DownloadableItem {
   url: string;
@@ -283,6 +272,15 @@ interface MultipleDownloadableItem {
   formats: { video: any[]; audio: any[]; videoIndex: number; audioIndex: number };
 }
 
+const store = useStore("store", app.getVersion(), {
+  downloadables: [],
+  downloadLocation: "../",
+  maxSimultaneous: 2,
+  autonumberItems: false,
+  audioFormatIndex: 0,
+  videoFormatIndex: 0,
+});
+
 export default defineComponent({
   name: "App",
   components: {},
@@ -290,28 +288,19 @@ export default defineComponent({
     /*
 const ytdl = new YTDL();
 
-const store = new Store('store', {
-  downloadables: [],
-  downloadLocation: '../',
-  maxSimultaneous: 2,
-  autonumberItems: false,
-  etag: '',
-  latestVersion: '',
-  audioFormatIndex: 0,
-  videoFormatIndex: 0
-});*/
+*/
 
     const newURL = ref("");
     const isExtrasOpen = ref(false);
     const showMoreOptions = ref(false);
-    const downloadables = reactive<DownloadableItem[]>([]); // store.get('downloadables'),
+    const downloadables = reactive<DownloadableItem[]>([]); // TODO: store.get('downloadables'),
     const downloadLocation = ref(""); //store.get('downloadLocation'),
     const maxSimultaneous = ref(1); // store.get('maxSimultaneous'),
     const autonumberItems = ref(false); // store.get('autonumberItems'),
     const audioFormatIndex = ref(0); // store.get('audioFormatIndex'),
     const videoFormatIndex = ref(0); // store.get('videoFormatIndex'),
-    const etag = ref(""); // store.get('etag'),
-    const latestVersion = ref(""); // store.get('latestVersion'),
+    const etag = ref(""); // remove
+    const latestVersion = ref(""); // remove
     const audioFormats = reactive(["mp3", "aac", "flac", "m4a", "opus", "vorbis", "wav"]);
     const videoFormats = reactive(["default", "mp4", "webm", "mkv"]);
     const ongoingDownloads = ref(0);
@@ -359,13 +348,9 @@ const store = new Store('store', {
     });
 
     /**  Returns true if any item is chosen */
-    const anyChosen = computed(() => {
-      return downloadables.some((x) => x.isChosen);
-    });
+    const anyChosen = computed(() => downloadables.some((x) => x.isChosen));
 
-    const existsItems = computed(() => {
-      return downloadables.length !== 0;
-    });
+    const existsItems = computed(() => downloadables.length !== 0);
 
     // TODO: Maybe I'll need deep watchers
     const multiDownloadItem = computed(() => {
@@ -488,6 +473,7 @@ const store = new Store('store', {
         newURL.value = "";
       } else {
         // Get link from clipboard
+        // TODO: Hopefully the next Tauri update gets clipboard support
         newURL.value = clipboard.readText();
       }
     }
@@ -643,13 +629,14 @@ const store = new Store('store', {
       };
     }
 
-    function showInFolder(filepath) {
-      console.log(filepath);
-      console.log(shell.showItemInFolder(filepath));
+    function showInFolder(filepath: string | undefined) {
+      if (filepath === undefined) return;
+      // TODO: Replace this with something more rock-solid
+      return shell.open(filepath.substring(0, filepath.lastIndexOf("/")));
     }
 
-    function openLink(link) {
-      shell.openExternal(link);
+    function openLink(link: string) {
+      return shell.open(link);
     }
 
     function selectDirectory() {
@@ -664,6 +651,7 @@ const store = new Store('store', {
 
     // TODO: Not needed, because Tauri has a built-in updater
     function checkForUpdates() {
+      return;
       newVersionMessage.value = "loading";
       fetch("https://api.github.com/repos/jarbun/downline/releases/latest", {
         headers: {
@@ -702,15 +690,16 @@ const store = new Store('store', {
         });
     }
 
+    /** Update Youtube-DL */
     function update() {
       ytdlUpdateMessage.value = "loading";
       ytdlDownloading.value = false;
       ytdl.update((message, status) => {
-        this.ytdlUpdateMessage = message;
+        ytdlUpdateMessage.value = message;
         if (status == 1) {
-          this.ytdlDownloading = true;
+          ytdlDownloading.value = true;
         } else {
-          this.ytdlDownloading = false;
+          ytdlDownloading.value = false;
         }
       });
     }
