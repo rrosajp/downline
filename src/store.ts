@@ -1,5 +1,6 @@
 import { throttle } from "@github/mini-throttle";
-import { reactive, ref, Ref, toRef, watch } from "vue";
+import { reactive, ref, Ref, toRaw, toRef, watch } from "vue";
+import { invoke } from "@tauri-apps/api/tauri";
 
 // This is what migration functions will look like
 // We could keep the old types around, but we don't need to
@@ -22,14 +23,36 @@ export type StoreData = {
   videoFormatIndex: number;
 };
 
-export function useStore(name: string, version: Promise<string>, defaults: StoreData) {
+export function useStore(version: Promise<string>, defaults: StoreData) {
   const data = reactive<StoreData>(JSON.parse(JSON.stringify(defaults)));
 
-  // TODO: Load data (including migrations)
+  invoke("load_store").then(async (loadedData) => {
+    try {
+      let parsedData = JSON.parse(loadedData + "");
+      if (parsedData.version === undefined) return;
 
-  function save() {
-    // TODO: Update the data on the harddisk in an async manner
-    // Save the name, the version and all the data
+      if (parsedData.version !== (await version)) {
+        // Do migrations here
+      }
+
+      data.downloadables = parsedData["downloadables"];
+      data.downloadLocation = parsedData["downloadLocation"] + "";
+      data.maxSimultaneous = +parsedData["maxSimultaneous"];
+      data.autonumberItems = !!parsedData["autonumberItems"];
+      data.audioFormatIndex = +parsedData["audioFormatIndex"];
+      data.videoFormatIndex = +parsedData["videoFormatIndex"];
+    } catch (e) {
+      console.warn(e);
+    }
+  });
+
+  async function save() {
+    invoke("save_store", {
+      data: JSON.stringify({
+        version: await version,
+        data: toRaw(data),
+      }),
+    });
   }
 
   const saveThrottled = throttle(() => save(), 500, {
@@ -44,37 +67,4 @@ export function useStore(name: string, version: Promise<string>, defaults: Store
     data,
     save,
   };
-}
-
-/**
- * Async data storage
- */
-class Store {
-  private data: { [prop: string]: JsonType };
-  constructor(name: string, defaults: { [prop: string]: JsonType }) {
-    // Renderer process gets 'app' via 'remote' while Main process can get it directly
-    // app.getPath('userData') returns a path to the user's app data directory
-    //const userDataPath = (electron.app || electron.remote.app).getPath('userData');
-
-    //this.path = path.join(userDataPath, name + '.json');
-
-    // TODO: Load the data here
-    // Check if all of the 'defaults' keys exist
-    this.data = JSON.parse(JSON.stringify(defaults));
-  }
-
-  // Retrieve value stored in key
-  get(key: string) {
-    return this.data[key];
-  }
-
-  //getBooleanRef(key: string): Ref<boolean | null> {}
-
-  // Store key-value pair
-  set(key: string, value: JsonType) {
-    this.data[key] = JSON.parse(JSON.stringify(value));
-    this.save();
-  }
-
-  save() {}
 }

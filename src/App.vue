@@ -158,9 +158,9 @@
       <div id="max-simultaneous">
         <label>Simultaneous Downloads <small>max. 5</small></label>
         <div>
-          <span class="fas fa-chevron-circle-left" @click="maxSimultaneous = maxSimultaneous > 1 ? --maxSimultaneous : maxSimultaneous"></span>
-          <span id="max-simultaneous-text">{{ maxSimultaneous }}</span>
-          <span class="fas fa-chevron-circle-right" @click="maxSimultaneous = maxSimultaneous < 5 ? ++maxSimultaneous : maxSimultaneous"></span>
+          <span class="fas fa-chevron-circle-left" @click="store.data.maxSimultaneous -= store.data.maxSimultaneous > 1 ? -1 : 0"></span>
+          <span id="max-simultaneous-text">{{ store.data.maxSimultaneous }}</span>
+          <span class="fas fa-chevron-circle-right" @click="store.data.maxSimultaneous += store.data.maxSimultaneous < 5 ? 1 : 0"></span>
         </div>
       </div>
 
@@ -182,8 +182,8 @@
         </div>
       </div>
 
-      <div id="autonumber-items" @click="autonumberItems = !autonumberItems">
-        <span class="fas" :class="[{ 'fa-square': !autonumberItems }, { 'fa-check-square': autonumberItems }]"></span>
+      <div id="autonumber-items" @click="store.data.autonumberItems = !store.data.autonumberItems">
+        <span class="fas" :class="[{ 'fa-square': !store.data.autonumberItems }, { 'fa-check-square': store.data.autonumberItems }]"></span>
         <label>Autonumber Playlist Items</label>
       </div>
     </section>
@@ -226,7 +226,6 @@ import { useStore } from "./store";
 // TODO: Get ytdl.js to work (Javascript for now)
 // TODO: Get store.js to work (Javascript, but the actual saving & loading happens async in Rust)
 
-// TODO: On exit (and also every once in a while) https://tauri.studio/en/docs/api/js/modules/event
 event.listen("tauri://close-requested", () => {
   store.save();
 });
@@ -275,7 +274,7 @@ interface MultipleDownloadableItem {
   formats: { video: any[]; audio: any[]; videoIndex: number; audioIndex: number };
 }
 
-const store = useStore("store", app.getVersion(), {
+const store = useStore(app.getVersion(), {
   downloadables: [],
   downloadLocation: "",
   maxSimultaneous: 2,
@@ -303,9 +302,7 @@ const ytdl = new YTDL();
     const isExtrasOpen = ref(false);
     const showMoreOptions = ref(false);
     const downloadables = reactive<DownloadableItem[]>([]); // TODO: store.get('downloadables'),
-    const downloadLocation = ref(""); //store.get('downloadLocation'),
-    const maxSimultaneous = ref(1); // store.get('maxSimultaneous'),
-    const autonumberItems = ref(false); // store.get('autonumberItems'),
+    const downloadLocation = ref(""); // remove
     const audioFormatIndex = ref(0); // store.get('audioFormatIndex'),
     const videoFormatIndex = ref(0); // store.get('videoFormatIndex'),
     const etag = ref(""); // remove
@@ -503,11 +500,11 @@ const ytdl = new YTDL();
       // Stop if an invalid quality is chosen
       if (chosenQuality(item) == null) return;
 
-      if (ongoingDownloads.value < maxSimultaneous.value) {
+      if (ongoingDownloads.value < store.data.maxSimultaneous) {
         item.state = "downloading";
 
         let outputFormat;
-        if (item.playlist.exists && autonumberItems.value) {
+        if (item.playlist.exists && store.data.autonumberItems) {
           outputFormat = path.join(downloadLocation.value, item.playlist.title, `${item.playlist.index} - %(title)s.%(ext)s`);
           item.filepath = path.join(downloadLocation.value, item.playlist.title, "*");
         } else if (item.playlist.exists) {
@@ -723,8 +720,6 @@ const ytdl = new YTDL();
       isExtrasOpen,
       showMoreOptions,
       downloadables,
-      maxSimultaneous,
-      autonumberItems,
       audioFormatIndex,
       videoFormatIndex,
       etag,
