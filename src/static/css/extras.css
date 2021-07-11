@@ -58,35 +58,46 @@
   font-weight: 400;
 }
 
+#dependencies {
+  padding: 10px;
+}
+
 /* Download Location */
-#download-location {
+.file-location {
   display: flex;
   flex-direction: column;
   padding-bottom: 20px;
 }
 
-#download-location div {
+.file-location div {
   display: flex;
 }
 
-#location-text {
+.location-text {
   color: var(--gray-light);
   flex-grow: 1;
   align-self: center;
 }
 
-#choose-location {
+.location-input {
+  display: flex;
+  padding-right: 12px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.choose-location {
   width: 80px;
   border-radius: 40px;
   color: white;
   background-color: var(--blue-dark);
 }
 
-#choose-location:hover {
+.choose-location:hover {
   background-color: var(--blue-light);
 }
 
-#choose-location:active {
+.choose-location:active {
   background-color: var(--blue-dark);
 }
 

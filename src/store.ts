@@ -19,9 +19,14 @@ export type StoreData = {
   downloadables: DownloadableItem[];
   ytdl: {
     path: string;
+    valid: boolean;
+    version?: string;
   };
   ffmpeg: {
-    path: string;
+    /** Chances are that ffmpeg doesn't exist. This case should be handled gracefully */
+    path: string | null;
+    valid: boolean;
+    version?: string;
   };
   downloadLocation: string;
   maxSimultaneous: number;
@@ -52,6 +57,12 @@ export function useStore(version: Promise<string>, defaults: StoreData) {
       data.autonumberItems = !!parsedData["autonumberItems"];
       data.audioFormatIndex = +parsedData["audioFormatIndex"];
       data.videoFormatIndex = +parsedData["videoFormatIndex"];
+      data.ytdl.path = parsedData["ytdl"]["path"] + "" || "youtube-dl";
+      data.ffmpeg.path = parsedData["ffmpeg"]["path"] + "" || "ffmpeg";
+      data.ytdl.valid = !!parsedData["ytdl"]["valid"];
+      data.ffmpeg.valid = !!parsedData["ffmpeg"]["valid"];
+      data.ytdl.version = parsedData["ytdl"]["version"];
+      data.ffmpeg.version = parsedData["ffmpeg"]["version"];
     } catch (e) {
       console.warn(e, loadedData);
     }

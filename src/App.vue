@@ -1,6 +1,10 @@
 <template>
   <section id="titlebar">
-    <span class="fas" :class="[{ 'fa-cog': !isExtrasOpen }, { 'fa-arrow-left': isExtrasOpen }]" @click="isExtrasOpen = !isExtrasOpen"></span>
+    <span
+      class="fas"
+      :class="[{ 'fa-cog': activeTab === 'main' }, { 'fa-arrow-left': activeTab !== 'main' }]"
+      @click="activeTab = activeTab === 'main' ? 'settings' : 'main'"
+    ></span>
     <h1>Downline</h1>
     <span></span>
   </section>
@@ -141,25 +145,26 @@
     </section>
   </section>
 
-  <section id="extras" :class="{ 'show-extras': isExtrasOpen }">
+  <section id="extras" :class="{ 'show-extras': activeTab !== 'main' }">
     <ul id="tabs">
       <li @click="activeTab = 'settings'" :class="{ active: activeTab === 'settings' }">Settings</li>
+      <li @click="activeTab = 'dependencies'" :class="{ active: activeTab === 'dependencies' }">Dependencies</li>
       <li @click="activeTab = 'about'" :class="{ active: activeTab === 'about' }">About</li>
     </ul>
 
     <section id="settings" v-if="activeTab === 'settings'">
-      <div id="download-location">
+      <div class="file-location">
         <label>Download Location</label>
         <div>
-          <span id="location-text">{{ store.data.downloadLocation }}</span>
-          <button id="choose-location" @click="selectDirectory">Browse</button>
+          <span class="location-text">{{ store.data.downloadLocation }}</span>
+          <button class="choose-location" @click="selectDirectory">Browse</button>
         </div>
       </div>
 
       <div id="max-simultaneous">
         <label>Simultaneous Downloads <small>max. 5</small></label>
         <div>
-          <span class="fas fa-chevron-circle-left" @click="store.data.maxSimultaneous -= store.data.maxSimultaneous > 1 ? -1 : 0"></span>
+          <span class="fas fa-chevron-circle-left" @click="store.data.maxSimultaneous += store.data.maxSimultaneous > 1 ? -1 : 0"></span>
           <span id="max-simultaneous-text">{{ store.data.maxSimultaneous }}</span>
           <span class="fas fa-chevron-circle-right" @click="store.data.maxSimultaneous += store.data.maxSimultaneous < 5 ? 1 : 0"></span>
         </div>
@@ -168,7 +173,7 @@
       <div class="formats">
         <header>Audio Format</header>
         <div>
-          <span class="fas fa-chevron-circle-left" @click="store.data.audioFormatIndex -= store.data.audioFormatIndex > 0 ? -1 : 0"></span>
+          <span class="fas fa-chevron-circle-left" @click="store.data.audioFormatIndex += store.data.audioFormatIndex > 0 ? -1 : 0"></span>
           <span class="format-text">{{ audioFormats[store.data.audioFormatIndex] }}</span>
           <span
             class="fas fa-chevron-circle-right"
@@ -180,7 +185,7 @@
       <div class="formats">
         <header>Video Format</header>
         <div>
-          <span class="fas fa-chevron-circle-left" @click="store.data.videoFormatIndex -= store.data.videoFormatIndex > 0 ? -1 : 0"></span>
+          <span class="fas fa-chevron-circle-left" @click="store.data.videoFormatIndex += store.data.videoFormatIndex > 0 ? -1 : 0"></span>
           <span class="format-text">{{ videoFormats[store.data.videoFormatIndex] }}</span>
           <span
             class="fas fa-chevron-circle-right"
@@ -192,6 +197,32 @@
       <div id="autonumber-items" @click="store.data.autonumberItems = !store.data.autonumberItems">
         <span class="fas" :class="[{ 'fa-square': !store.data.autonumberItems }, { 'fa-check-square': store.data.autonumberItems }]"></span>
         <label>Autonumber Playlist Items</label>
+      </div>
+    </section>
+    <section id="dependencies" v-else-if="activeTab === 'dependencies'">
+      <div class="file-location">
+        <!-- TODO: Download button -->
+        <label>YouTube-DL Location</label>
+        <div>
+          <span class="location-text location-input">
+            <input type="text" spellcheck="false" placeholder="Enter path or name" v-model="store.data.ytdl.path" />
+          </span>
+          <button class="choose-location" @click="selectYoutubeDl">Browse</button>
+        </div>
+        <div v-if="!store.data.ytdl.valid"><small>YouTube-DL could not be found.</small></div>
+        <div v-else>
+          <small>Version {{ store.data.ytdl.version ?? "unknown" }}.</small>
+        </div>
+      </div>
+      <div class="file-location">
+        <!-- TODO: Download button -->
+        <label>FFMPEG Location</label>
+        <div>
+          <span class="location-text location-input">
+            <input type="text" spellcheck="false" placeholder="Enter path or name" v-model="store.data.ffmpeg.path" />
+          </span>
+          <button class="choose-location" @click="selectFfmpeg">Browse</button>
+        </div>
       </div>
     </section>
     <section id="about" v-else-if="activeTab === 'about'">
@@ -229,8 +260,9 @@ import { defineComponent, reactive, ref, computed, watch, toRef } from "vue";
 import { app, event, shell, path, dialog } from "@tauri-apps/api";
 import { useStore } from "./store";
 import { DownloadableItem, Downloader } from "./ytdl";
+import { throttle } from "@github/mini-throttle";
 
-// TODO: If youtube-dl or ffmpeg are missing: show a download/browse dialog
+// TODO: Check if simply putting youtube-dl.exe next to this exe works
 // TODO: Get ytdl.js to work (Javascript for now)
 // TODO: Finish hooking up the store (store.get('downloadables') and co.)
 
@@ -266,9 +298,11 @@ const store = useStore(app.getVersion(), {
   videoFormatIndex: 0,
   ytdl: {
     path: "youtube-dl",
+    valid: true,
   },
   ffmpeg: {
     path: "ffmpeg",
+    valid: true,
   },
 });
 
@@ -285,7 +319,6 @@ export default defineComponent({
     const downloader = new Downloader(); // ytdl
 
     const newURL = ref("");
-    const isExtrasOpen = ref(false);
     const showMoreOptions = ref(false);
     const downloadables = reactive<DownloadableItem[]>([]); // TODO: store.get('downloadables'),
     const downloadLocation = ref(""); // remove
@@ -296,7 +329,7 @@ export default defineComponent({
     const ongoingDownloads = ref(0);
     const downloadQueue = reactive<string[]>([]);
     const appVersion = ref("");
-    const activeTab = ref("settings");
+    const activeTab = ref<"main" | "settings" | "dependencies" | "about">("main");
     const newVersionMessage = ref("");
     const ytdlUpdateMessage = ref("");
     const ytdlDownloading = ref(false);
@@ -306,15 +339,44 @@ export default defineComponent({
     const isLoading = ref(false);
 
     app.getVersion().then((version) => (appVersion.value = version));
+
     watch(
       store.isFirstRun,
       (value) => {
         if (value) {
-          // downloader.checkYoutubeDl(); // TODO:
+          downloader.checkYoutubeDl(["youtube-dl", "yt-dlp"]).then((result) => {
+            if (!result) {
+              store.data.ytdl.valid = false;
+              activeTab.value = "dependencies";
+            } else {
+              store.data.ytdl.path = result.binary;
+              store.data.ytdl.valid = true;
+              store.data.ytdl.version = result.version;
+            }
+          });
         }
       },
       { immediate: true }
     );
+    {
+      const checkThrottled = throttle(
+        (path: string) => {
+          downloader.checkYoutubeDl([path]).then((result) => {
+            store.data.ytdl.valid = result !== null;
+            store.data.ytdl.version = result?.version;
+          });
+        },
+        500,
+        {
+          middle: false,
+        }
+      );
+
+      watch(
+        () => store.data.ytdl.path,
+        (value) => checkThrottled(value)
+      );
+    }
 
     /**  Returns selected items if any, otherwise all items, that are not yet complete */
     const chosenItems = computed(() => {
@@ -588,9 +650,9 @@ export default defineComponent({
         item.state = "stopped";
         ongoingDownloads.value--;
 
-        ytdl.pause(url);
-
-        downloadFromQueue();
+        downloader.pause(url).finally(() => {
+          downloadFromQueue();
+        });
       } else if (item.state === "queued") {
         item.state = "stopped";
         // Remove downloadable from queue
@@ -651,7 +713,30 @@ export default defineComponent({
           defaultPath: store.data.downloadLocation,
         })
         .then((dir) => {
+          if (!dir) return;
           store.data.downloadLocation = Array.isArray(dir) ? dir[0] : dir;
+        });
+    }
+
+    function selectYoutubeDl() {
+      dialog
+        .open({
+          multiple: false,
+        })
+        .then((file) => {
+          if (!file) return;
+          store.data.ytdl.path = Array.isArray(file) ? file[0] : file;
+        });
+    }
+
+    function selectFfmpeg() {
+      dialog
+        .open({
+          multiple: false,
+        })
+        .then((file) => {
+          if (!file) return;
+          store.data.ffmpeg.path = Array.isArray(file) ? file[0] : file;
         });
     }
 
@@ -727,7 +812,6 @@ export default defineComponent({
       store,
 
       newURL,
-      isExtrasOpen,
       showMoreOptions,
       downloadables,
       etag,
@@ -784,6 +868,8 @@ export default defineComponent({
       showInFolder,
       openLink,
       selectDirectory,
+      selectYoutubeDl,
+      selectFfmpeg,
       checkForUpdates,
       update,
       formatDuration,

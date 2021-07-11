@@ -11,20 +11,17 @@ export class Downloader {
   /** Video extension */
   static get videoFormats() {
     // Format order taken from https://github.com/yt-dlp/yt-dlp#sorting-formats
-    return ["default/best", "mp4", "webm", "mkv"] as const;
+    return ["best", "mp4", "webm", "mkv"] as const;
   }
 
   /** Audio extension */
   static get audioFormats() {
     // No idea if I should remove some of those formats
-    return ["default/best", "m4a", "aac", "mp3", "ogg", "opus", "webm", "flac", "vorbis", "wav"] as const;
+    return ["best", "m4a", "aac", "mp3", "ogg", "opus", "webm", "flac", "vorbis", "wav"] as const;
   }
 
   /** Checks if youtube-dl or an alternative exists. Will return the version number, if possible */
-  async checkYoutubeDl(path?: string) {
-    const pathsToCheck = ["youtube-dl", "yt-dlp"];
-    if (path) pathsToCheck.unshift(path);
-
+  async checkYoutubeDl(pathsToCheck: string[]) {
     for (let i = 0; i < pathsToCheck.length; i++) {
       const youtubeDlVersion = await this.checkIfBinaryExists(pathsToCheck[i], ["--version"]);
       if (youtubeDlVersion !== null) {
@@ -52,7 +49,6 @@ export class Downloader {
     });
   }
 
-  // TODO: Remember the youtube-dl path?
   async fetchInfo(urls: string[], path: string, dataCallback: (data: DownloadableItem) => void) {
     if (urls.length === 0) return;
 
@@ -99,7 +95,7 @@ export class Downloader {
       args.push("--format");
 
       let format = `best*[vcodec=none]${audioQuality}`; // Pick best format by default
-      if (audioFormat !== "default/best") {
+      if (audioFormat !== "best") {
         // Pick format with a given extension
         format = `ba[ext=${audioFormat}]${audioQuality} / ${format}`;
       }
@@ -107,7 +103,7 @@ export class Downloader {
     } else {
       args.push("--format");
       let format = `bv*${videoQuality}+ba${videoQuality}/b${videoQuality}`; // Pick best format by default
-      if (videoFormat !== "default/best") {
+      if (videoFormat !== "best") {
         // Pick format with a given extension
         format = `bv*[ext=${videoFormat}]${videoQuality}+ba[ext=${videoFormat}]${videoQuality}/b[ext=${videoFormat}]${videoQuality} / ${format}`;
       }
@@ -266,13 +262,30 @@ export class Downloader {
     });
   }
 
+  /** Simply kills the child process */
+  async pause(id: string) {
+    const child = this.runningProcesses.get(id);
+    if (child) {
+      try {
+        await child.kill();
+      } catch (e) {
+        console.warn(e);
+      }
+      // And now the usual handler will take care of deleting the child process
+    }
+  }
+
   // TODO: checkFfmpeg(path?: string)
   // TODO: downloadYoutubeDl() which tries to download it from multiple mirrors (first yt-dlc then youtube-dl)
+  // https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest
+  // https://api.github.com/repos/ytdl-org/youtube-dl/releases/latest
+  // Take the .exe asset on Windows, and the no extension asset otherwise
+  // Oh, it should also be able to ask the locally installed package manager to do so?
   // TODO: downloadFfmpeg() which tries to download it from multiple mirrors
+  // Butt how? https://ffmpeg.org/download.html
   // TODO: updateYoutubeDl() which tries to update the youtube-dl binary
 
   // TODO: download(item, args, ...) which reports {progress percentage, current progress status (fetching/downloading/converting), destination file path}
-  // TODO: pause which just kills the child process
 }
 
 export interface DownloadableItemBasic {
