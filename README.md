@@ -6,12 +6,6 @@
 
 **Download the latest version [here](https://github.com/jarbun/downline/releases/latest)**.
 
-## Current Status
-
-We're investigating a rewrite of Downline using [Tauri](https://github.com/tauri-apps/tauri). This would allow us to ship much smaller binaries while also making sure that the software is as sandboxed as possible.
-
-Will probably support https://github.com/yt-dlp/yt-dlp
-
 ## Screenshots
 
 <p align="center">
@@ -32,9 +26,10 @@ Will probably support https://github.com/yt-dlp/yt-dlp
 ### Coming Soon
 
 - More file naming options
-- Notifications and system tray integration
-- Load links from text file
 - Display errors
+- And more
+
+To support this project, you can [donate to the developer](https://www.paypal.com/donate?hosted_button_id=U8D5FNF9JSUFU).
 
 ## Developer Instructions
 
@@ -113,7 +108,7 @@ If you would like to build for a platform without all the extra build steps (or 
 
 ## Legal
 
-This software is distributed under the [MIT license](https://github.com/jarbun/downline/blob/master/LICENSE).
+This software is distributed under the [MIT license](https://github.com/stefnotch/downline/blob/master/LICENSE).
 
 ## Updating
 
