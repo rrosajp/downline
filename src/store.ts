@@ -39,10 +39,10 @@ export function useStore(version: Promise<string>, defaults: StoreData) {
       return;
     }
     try {
-      let parsedData = JSON.parse(loadedData + "");
-      if (parsedData.version === undefined) return;
+      let { version, data: parsedData } = JSON.parse(loadedData + "");
+      if (version === undefined) return;
 
-      if (parsedData.version !== (await version)) {
+      if (version !== (await version)) {
         // Do migrations here
       }
 
