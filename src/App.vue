@@ -448,21 +448,25 @@ export default defineComponent({
       });
     }
 
-    function fetchInfo() {
+    async function fetchInfo() {
       if (newURL.value.trim().length !== 0) {
         // Load link if url field is not empty
         isLoading.value = true;
 
-        ytdl.fetchInfo({
-          urls: [newURL.value],
-          onSuccess: (info) => {
-            if (info != null) this.addItem(info);
-          },
-          onError: (err) => console.log(err),
-          onExit: () => {
-            isLoading.value = false;
-          },
-        });
+        try {
+          await downloader.fetchInfoQuick([newURL.value], store.data.ytdl.path, (item) => {
+            if ("formats" in item) {
+              addItem(item);
+            } else {
+              // TODO: Support for those basic items
+            }
+          });
+        } catch (e) {
+          // TODO: Maybe something is wrong with youtube-dl?
+          console.error(e);
+        } finally {
+          isLoading.value = false;
+        }
 
         newURL.value = "";
       } else {
@@ -475,7 +479,7 @@ export default defineComponent({
     function addItem(item: DownloadableItem) {
       // Add downloadable to list if not already present
       if (downloadables.findIndex((x) => x.url === item.url) === -1) {
-        downloadables.push(item);
+        downloadables.push(item); // TODO: Use unshift? What about playlists? Or should I have item groups?
       }
     }
 
