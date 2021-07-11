@@ -221,11 +221,10 @@
 import { defineComponent, reactive, ref, computed, watch, toRef } from "vue";
 import { app, event, shell, path, dialog } from "@tauri-apps/api";
 import { useStore } from "./store";
-import { DownloadableItem } from "./ytdl";
+import { DownloadableItem, Downloader } from "./ytdl";
 
 // TODO: If youtube-dl or ffmpeg are missing: show a download/browse dialog
 // TODO: Get ytdl.js to work (Javascript for now)
-// TODO: Figure out the deal with those audio & video formats
 // TODO: Finish hooking up the store (store.get('downloadables') and co.)
 
 // TODO: Auto-updater
@@ -241,7 +240,14 @@ event.listen("tauri://close-requested", () => {
 interface MultipleDownloadableItem {
   isSubsChosen: boolean;
   isAudioChosen: boolean;
-  formats: { video: any[]; audio: any[]; videoIndex: number; audioIndex: number };
+  formats: {
+    /** Video resolution */
+    video: number[];
+    /** Audio quality */
+    audio: number[];
+    videoIndex: number;
+    audioIndex: number;
+  };
 }
 
 const store = useStore(app.getVersion(), {
@@ -251,6 +257,12 @@ const store = useStore(app.getVersion(), {
   autonumberItems: false,
   audioFormatIndex: 0,
   videoFormatIndex: 0,
+  ytdl: {
+    path: "youtube-dl",
+  },
+  ffmpeg: {
+    path: "ffmpeg",
+  },
 });
 
 path.downloadDir().then((dir) => {
@@ -263,10 +275,7 @@ export default defineComponent({
   name: "App",
   components: {},
   setup(props, context) {
-    /*
-const ytdl = new YTDL();
-
-*/
+    const downloader = new Downloader(); // ytdl
 
     const newURL = ref("");
     const isExtrasOpen = ref(false);
@@ -277,8 +286,8 @@ const ytdl = new YTDL();
     const videoFormatIndex = ref(0); // store.get('videoFormatIndex'),
     const etag = ref(""); // remove
     const latestVersion = ref(""); // remove
-    const audioFormats = reactive(["mp3", "aac", "flac", "m4a", "opus", "vorbis", "wav"]);
-    const videoFormats = reactive(["default", "mp4", "webm", "mkv"]);
+    const audioFormats = reactive(Downloader.audioFormats);
+    const videoFormats = reactive(Downloader.videoFormats);
     const ongoingDownloads = ref(0);
     const downloadQueue = reactive<string[]>([]);
     const appVersion = ref("");
@@ -292,6 +301,15 @@ const ytdl = new YTDL();
     const isLoading = ref(false);
 
     app.getVersion().then((version) => (appVersion.value = version));
+    watch(
+      store.isFirstRun,
+      (value) => {
+        if (value) {
+          // downloader.checkYoutubeDl(); // TODO:
+        }
+      },
+      { immediate: true }
+    );
 
     /**  Returns selected items if any, otherwise all items, that are not yet complete */
     const chosenItems = computed(() => {

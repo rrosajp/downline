@@ -17,6 +17,12 @@ function migrate3_0_0to3_0_0(data: any) {
 
 export type StoreData = {
   downloadables: DownloadableItem[];
+  ytdl: {
+    path: string;
+  };
+  ffmpeg: {
+    path: string;
+  };
   downloadLocation: string;
   maxSimultaneous: number;
   autonumberItems: boolean;
@@ -26,8 +32,12 @@ export type StoreData = {
 
 export function useStore(version: Promise<string>, defaults: StoreData) {
   const data = reactive<StoreData>(JSON.parse(JSON.stringify(defaults)));
-
+  const isFirstRun = ref(false);
   invoke("load_store").then(async (loadedData) => {
+    if (!loadedData) {
+      isFirstRun.value = true;
+      return;
+    }
     try {
       let parsedData = JSON.parse(loadedData + "");
       if (parsedData.version === undefined) return;
@@ -43,7 +53,7 @@ export function useStore(version: Promise<string>, defaults: StoreData) {
       data.audioFormatIndex = +parsedData["audioFormatIndex"];
       data.videoFormatIndex = +parsedData["videoFormatIndex"];
     } catch (e) {
-      console.warn(e);
+      console.warn(e, loadedData);
     }
   });
 
@@ -67,5 +77,6 @@ export function useStore(version: Promise<string>, defaults: StoreData) {
   return {
     data,
     save,
+    isFirstRun,
   };
 }

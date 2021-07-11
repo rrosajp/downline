@@ -1,51 +1,50 @@
 /* NodeJS API for youtube-dl */
-const electron = require('electron');
-const { spawn } = require('child_process');
-const path = require('path');
-const fse = require('fs-extra');
+const electron = require("electron");
+const { spawn } = require("child_process");
+const path = require("path");
+const fse = require("fs-extra");
 
 class YTDL {
   constructor() {
-    const userDataPath = (electron.app || electron.remote.app).getPath('userData');
+    const userDataPath = (electron.app || electron.remote.app).getPath("userData");
 
     // Path to youtube-dl binary
-    this.ytdlPath = path.join(userDataPath, 'resources', 'youtube-dl', 'youtube-dl');
+    this.ytdlPath = path.join(userDataPath, "resources", "youtube-dl", "youtube-dl");
 
     this.resourcesReady = new Promise((resolve, reject) => {
-      const resourcesSourcePath = process.env.NODE_ENV === 'DEV'
-        ? path.join(process.cwd(), 'resources', 'youtube-dl')
-        :  path.join(__dirname, '../../', 'youtube-dl');
+      const resourcesSourcePath =
+        process.env.NODE_ENV === "DEV" ? path.join(process.cwd(), "resources", "youtube-dl") : path.join(__dirname, "../../", "youtube-dl");
 
-      const targetPath = path.join(userDataPath, 'resources', 'youtube-dl');
+      const targetPath = path.join(userDataPath, "resources", "youtube-dl");
       if (fse.existsSync(targetPath)) {
         resolve();
       } else {
-        fse.copy(resourcesSourcePath, targetPath)
-          .then(() => resolve(), (reason) => reject(reason));
+        fse.copy(resourcesSourcePath, targetPath).then(
+          () => resolve(),
+          (reason) => reject(reason)
+        );
       }
     });
 
     // Path to directory containing ffmpeg
-    this.ffmpegPath = process.env.NODE_ENV === 'DEV'
-      ? path.join(process.cwd(), 'resources', 'ffmpeg')
-      : path.join(__dirname, '../../', 'ffmpeg');
+    this.ffmpegPath = process.env.NODE_ENV === "DEV" ? path.join(process.cwd(), "resources", "ffmpeg") : path.join(__dirname, "../../", "ffmpeg");
     // Stores data of ongoing downloads
     this.ongoing = [];
     // Stores json output of youtube-dl
-    this.jsonData = '';
+    this.jsonData = "";
   }
 
   /* Fetches information for a list of URLs */
   fetchInfo({ urls, onSuccess, onError, onExit }) {
-    const args = ['--all-subs', '--dump-json', '--no-playlist', '--ignore-errors', ...urls];
+    const args = ["--all-subs", "--dump-json", "--no-playlist", "--ignore-errors", ...urls];
     this.resourcesReady.then(() => {
       const child = spawn(this.ytdlPath, args);
 
-      child.stdout.on('data', data => onSuccess(this._getMetadata(data.toString())));
+      child.stdout.on("data", (data) => onSuccess(this._getMetadata(data.toString())));
 
-      child.stderr.on('data', error => onError(error.toString()));
+      child.stderr.on("data", (error) => onError(error.toString()));
 
-      child.on('exit', onExit);
+      child.on("exit", onExit);
     });
   }
 
@@ -55,14 +54,16 @@ class YTDL {
 
     this.jsonData += data;
     if (this._isValidJSON(this.jsonData)) {
-      const { webpage_url, title, thumbnail, duration, formats, requested_subtitles, playlist_index, playlist_title, n_entries, playlist } = JSON.parse(this.jsonData);
-      this.jsonData = '';
+      const { webpage_url, title, thumbnail, duration, formats, requested_subtitles, playlist_index, playlist_title, n_entries, playlist } =
+        JSON.parse(this.jsonData);
+      this.jsonData = "";
 
-      let video = [], audio = [];
-      formats.forEach(format => {
-        if (format.vcodec !== 'none' && video.indexOf(format.height) === -1) {
+      let video = [],
+        audio = [];
+      formats.forEach((format) => {
+        if (format.vcodec !== "none" && video.indexOf(format.height) === -1) {
           video.push(format.height);
-        } else if (format.acodec !== 'none' && audio.indexOf(format.abr) === -1) {
+        } else if (format.acodec !== "none" && audio.indexOf(format.abr) === -1) {
           audio.push(format.abr);
         }
       });
@@ -80,7 +81,7 @@ class YTDL {
         title: title,
         thumbnail: thumbnail,
         duration: this._formatDuration(duration),
-        state: 'stopped',
+        state: "stopped",
         isChosen: false,
         isSubsChosen: false,
         isAudioChosen: false,
@@ -88,21 +89,21 @@ class YTDL {
           video: video,
           audio: audio,
           videoIndex: video.length - 1,
-          audioIndex: audio.length - 1
+          audioIndex: audio.length - 1,
         },
         subtitles: subtitles,
         progress: {
           value: 0,
           size: null,
           speed: null,
-          eta: null
+          eta: null,
         },
         playlist: {
           exists: !!playlist,
           entries: n_entries,
           title: playlist_title,
-          index: playlist_index
-        }
+          index: playlist_index,
+        },
       };
     }
 
@@ -134,15 +135,15 @@ class YTDL {
     let args;
     if (item.isSubsChosen && item.subtitles.length !== 0) {
       // Download and embed subtitles
-      args = ['--ffmpeg-location', this.ffmpegPath, '--all-subs', '--embed-subs', '-f', format, '-o', outputFormat];
+      args = ["--ffmpeg-location", this.ffmpegPath, "--all-subs", "--embed-subs", "-f", format, "-o", outputFormat];
     } else {
-      args = ['--ffmpeg-location', this.ffmpegPath, '-f', format, '-o', outputFormat];
+      args = ["--ffmpeg-location", this.ffmpegPath, "-f", format, "-o", outputFormat];
     }
 
     if (item.isAudioChosen) {
-      args.push(...['--extract-audio', '--audio-format', audioFormat]);
-    } else if (videoFormat != 'default') {
-      args.push(...['--recode-video', videoFormat]);
+      args.push(...["--extract-audio", "--audio-format", audioFormat]);
+    } else if (videoFormat != "default") {
+      args.push(...["--recode-video", videoFormat]);
     }
 
     args.push(item.url);
@@ -153,20 +154,20 @@ class YTDL {
       this.ongoing.push({ url: item.url, pid: child.pid });
 
       // Send download progress info
-      child.stdout.on('data', data => {
+      child.stdout.on("data", (data) => {
         console.log(data.toString());
         onDownload(item.url, {
           progress: this._extractProgress(data.toString()),
           filepath: this._getFilepath(data.toString()),
-          isPostprocessing: this._isPostprocessing(data.toString())
+          isPostprocessing: this._isPostprocessing(data.toString()),
         });
       });
       // Log errors
-      child.stderr.on('data', data => console.error(data.toString()));
+      child.stderr.on("data", (data) => console.error(data.toString()));
 
       // Remove completed download from ongoing list
-      child.on('close', () => {
-        const indexOfCompleted = this.ongoing.findIndex(x => x.url === item.url);
+      child.on("close", () => {
+        const indexOfCompleted = this.ongoing.findIndex((x) => x.url === item.url);
         this.ongoing.splice(indexOfCompleted, 1);
 
         onComplete(item.url);
@@ -178,9 +179,7 @@ class YTDL {
   _extractProgress(data) {
     const progressRegex = /\[download\]\D+(\d+\.\d+)\D+(\d+\.\d+\w+)\D+(\d+\.\d+\w+\/s)\D+((?:\d+:?)+)/;
     const match = progressRegex.exec(data);
-    return match
-      ? { value: match[1], size: match[2], speed: match[3], eta: match[4] }
-      : null;
+    return match ? { value: match[1], size: match[2], speed: match[3], eta: match[4] } : null;
   }
 
   _getFilepath(data) {
@@ -202,7 +201,7 @@ class YTDL {
 
   /* Pauses download of given URL by killing its child process */
   pause(url) {
-    const index = this.ongoing.findIndex(x => x.url == url);
+    const index = this.ongoing.findIndex((x) => x.url == url);
 
     if (index !== -1) {
       process.kill(this.ongoing[index].pid);
@@ -217,42 +216,45 @@ class YTDL {
       // Extract string containing hh:mm:ss
       duration = duration.toISOString().substr(11, 8);
       // Remove unwanted zeros and return
-      if (duration[0] != '0') {
+      if (duration[0] != "0") {
         return duration;
-      } else if (duration[1] != '0') {
+      } else if (duration[1] != "0") {
         return duration.substr(1);
-      } else if (duration[3] != '0') {
+      } else if (duration[3] != "0") {
         return duration.substr(3);
       } else {
         return duration.substr(4);
       }
     }
-    return 'N/A';
+    return "N/A";
   }
 
   /* Updates youtube-dl binary */
   update(setMessage) {
+    // Rename to updateBinary
     this.resourcesReady.then(() => {
-      const child = spawn(this.ytdlPath, ['--update']);
+      const child = spawn(this.ytdlPath, ["--update"]);
 
-      child.stdout.on('data', data => {
+      child.stdout.on("data", (data) => {
         const message = data.toString();
         console.log(message);
         let match;
         if (/youtube-dl\sis\sup-to-date/.exec(message)) {
-          setMessage('No updates available', 0);
+          setMessage("No updates available", 0);
         } else if ((match = /Updating\sto\sversion\s([\d.]+)/.exec(message)) != null) {
           setMessage(`Updating to version ${match[1]}`, 1);
         } else if (/Updated\syoutube-dl/.exec(message)) {
-          setMessage('Updated successfully', 0);
+          setMessage("Updated successfully", 0);
         } else if (/ERROR:\sno\swrite\spermissions/) {
-          setMessage('ERROR: Unable to update', 0);
+          setMessage("ERROR: Unable to update", 0);
         } else {
           setMessage(message);
         }
       });
     });
   }
+
+  downloadBinary() {}
 }
 
 module.exports = YTDL;
