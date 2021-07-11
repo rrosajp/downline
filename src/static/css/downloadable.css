@@ -138,7 +138,9 @@
 }
 .quality {
   color: white;
-  width: 50px;
+  min-width: 40px;
+  padding-left: 8px;
+  padding-right: 8px;
   text-align: center;
   line-height: 100%;
   font-weight: 500;

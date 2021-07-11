@@ -1,6 +1,6 @@
-@import url('https://fonts.googleapis.com/css?family=Rubik:400,500');
+@import url("https://fonts.googleapis.com/css?family=Rubik:400,500");
 
-:root{
+:root {
   --titlebar: #1d1d1d;
   --background: #2f2f2f;
   --highlight: rgba(120, 120, 120, 0.4);
@@ -20,14 +20,14 @@
   --blue-light: #1e88e5;
 }
 
-body{
-  font-family: 'Rubik', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu,
-    Cantarell, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+body {
+  font-family: "Rubik", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", Helvetica, Arial,
+    sans-serif;
   margin: 0;
   overflow-y: hidden;
 }
 
-button{
+button {
   font-family: inherit;
   font-size: 13px;
   font-weight: 500;
@@ -39,42 +39,46 @@ button{
   user-select: none;
 }
 
-#extras{
-  transition: transform .25s;
+#extras {
+  transition: transform 0.25s;
   z-index: 3;
   position: relative;
 }
-.show-extras{
+.show-extras {
   transform: translateY(calc(-100vh + 30px));
 }
 
-.fade-enter, .fade-leave-to{
+.fade-enter,
+.fade-leave-to {
   opacity: 0;
 }
-.fade-enter-to, .fade-leave{
+.fade-enter-to,
+.fade-leave {
   opacity: 1;
 }
-.fade-leave-active, .fade-enter-active{
-  transition: opacity .25s;
+.fade-leave-active,
+.fade-enter-active {
+  transition: opacity 0.25s;
 }
-.fade-leave-active.downloadable{
+.fade-leave-active.downloadable {
   position: absolute;
 }
-.fade-move{
-  transition: transform .25s;
+.fade-move {
+  transition: transform 0.25s;
 }
 
 /* ----- Tooltips ----- */
-[data-tooltip]{
+[data-tooltip] {
   position: relative;
   z-index: 2;
 }
 
-[data-tooltip]:hover::after{
+[data-tooltip]:hover::after {
   content: attr(data-tooltip);
   position: absolute;
-  font-family: 'Rubik';
+  font-family: "Rubik";
   left: 50%;
+  top: 50%;
   text-align: center;
   white-space: nowrap;
   padding: 3px 5px;
@@ -84,23 +88,23 @@ button{
   font-weight: 400;
   font-size: 13px;
   color: white;
-  transform: translateX(-50%) translateY(-6px);
+  transform: translateX(-50%) translateY(-30px);
   background-color: var(--black-dark);
-  animation: appear 2s;
+  animation: appear 500ms;
 }
 
-@keyframes appear{
+@keyframes appear {
   0% {
     opacity: 0;
     transform: translateX(-50%) translateY(0);
   }
-  95%{
+  95% {
     opacity: 0;
-    transform: translateX(-50%) translateY(-3px);
+    transform: translateX(-50%) translateY(-25px);
   }
   100% {
     opacity: 1;
-    transform: translateX(-50%) translateY(-6px);
+    transform: translateX(-50%) translateY(-30px);
   }
 }
 
@@ -110,23 +114,23 @@ button{
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--scrollbar); 
+  background: var(--scrollbar);
 }
 
 /* ----- Icons ----- */
-.fas{
+.fas {
   cursor: pointer;
 }
 
-.fa-music{
+.fa-music {
   font-size: 17px;
 }
 
-.fa-closed-captioning{
+.fa-closed-captioning {
   font-size: 21px;
 }
 
-.hidden{
+.hidden {
   visibility: hidden;
 }
 
@@ -144,6 +148,10 @@ button{
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }

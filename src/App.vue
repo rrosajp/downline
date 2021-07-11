@@ -26,7 +26,7 @@
 
           <section class="middle" @click="(ev) => choose(ev, item)">
             <h1>{{ item.title }}</h1>
-            <span class="duration">{{ item.duration }}</span>
+            <span class="duration">{{ formatDuration(item.duration) }}</span>
             <div class="options" v-if="item.progress.value == 0 && item.state === 'stopped'">
               <div>
                 <span class="fas fa-chevron-circle-left" @dblclick.stop @click.stop="decrement(item)"> </span>
@@ -43,6 +43,7 @@
               </span>
               <span
                 class="option-icon fas fa-music"
+                data-tooltip="Audio Only"
                 :class="{ selected: item.isAudioChosen }"
                 @dblclick.stop
                 @click.stop="updateIsAudioChosen([item])"
@@ -167,18 +168,24 @@
       <div class="formats">
         <header>Audio Format</header>
         <div>
-          <span class="fas fa-chevron-circle-left" @click="audioFormatIndex = audioFormatIndex > 0 ? --audioFormatIndex : audioFormatIndex"></span>
-          <span class="format-text">{{ audioFormats[audioFormatIndex] }}</span>
-          <span class="fas fa-chevron-circle-right" @click="audioFormatIndex = audioFormatIndex < 6 ? ++audioFormatIndex : audioFormatIndex"></span>
+          <span class="fas fa-chevron-circle-left" @click="store.data.audioFormatIndex -= store.data.audioFormatIndex > 0 ? -1 : 0"></span>
+          <span class="format-text">{{ audioFormats[store.data.audioFormatIndex] }}</span>
+          <span
+            class="fas fa-chevron-circle-right"
+            @click="store.data.audioFormatIndex += store.data.audioFormatIndex < audioFormats.length - 1 ? 1 : 0"
+          ></span>
         </div>
       </div>
 
       <div class="formats">
         <header>Video Format</header>
         <div>
-          <span class="fas fa-chevron-circle-left" @click="videoFormatIndex = videoFormatIndex > 0 ? --videoFormatIndex : videoFormatIndex"></span>
-          <span class="format-text">{{ videoFormats[videoFormatIndex] }}</span>
-          <span class="fas fa-chevron-circle-right" @click="videoFormatIndex = videoFormatIndex < 3 ? ++videoFormatIndex : videoFormatIndex"></span>
+          <span class="fas fa-chevron-circle-left" @click="store.data.videoFormatIndex -= store.data.videoFormatIndex > 0 ? -1 : 0"></span>
+          <span class="format-text">{{ videoFormats[store.data.videoFormatIndex] }}</span>
+          <span
+            class="fas fa-chevron-circle-right"
+            @click="store.data.videoFormatIndex += store.data.videoFormatIndex < videoFormats.length - 1 ? 1 : 0"
+          ></span>
         </div>
       </div>
 
@@ -282,8 +289,6 @@ export default defineComponent({
     const showMoreOptions = ref(false);
     const downloadables = reactive<DownloadableItem[]>([]); // TODO: store.get('downloadables'),
     const downloadLocation = ref(""); // remove
-    const audioFormatIndex = ref(0); // store.get('audioFormatIndex'),
-    const videoFormatIndex = ref(0); // store.get('videoFormatIndex'),
     const etag = ref(""); // remove
     const latestVersion = ref(""); // remove
     const audioFormats = reactive(Downloader.audioFormats);
@@ -512,8 +517,8 @@ export default defineComponent({
         ytdl.download({
           item: item,
           outputFormat: outputFormat,
-          audioFormat: audioFormats[audioFormatIndex.value],
-          videoFormat: videoFormats[videoFormatIndex.value],
+          audioFormat: audioFormats[store.data.audioFormatIndex],
+          videoFormat: videoFormats[store.data.videoFormatIndex],
           onStart: () => console.log("Download Started"),
           onDownload: (url, { progress, filepath, isPostprocessing }) => {
             const item = downloadables.find((x) => x.url === url);
@@ -705,6 +710,19 @@ export default defineComponent({
       });
     }
 
+    function formatDuration(seconds: number) {
+      const hoursPart = Math.floor(seconds / (60 * 60));
+      const minutesPart = Math.floor((seconds - hoursPart * 60 * 60) / 60);
+      const secondsPart = Math.ceil(seconds - hoursPart * 60 * 60 - minutesPart * 60);
+      let result = minutesPart + ":" + (secondsPart + "").padStart(2, "0");
+
+      if (hoursPart > 0) {
+        result = result.padStart(5, "0"); // 00:00
+        result = hoursPart + ":" + result;
+      }
+      return result;
+    }
+
     return {
       store,
 
@@ -712,8 +730,6 @@ export default defineComponent({
       isExtrasOpen,
       showMoreOptions,
       downloadables,
-      audioFormatIndex,
-      videoFormatIndex,
       etag,
       latestVersion,
       audioFormats,
@@ -770,6 +786,7 @@ export default defineComponent({
       selectDirectory,
       checkForUpdates,
       update,
+      formatDuration,
     };
   },
 });
