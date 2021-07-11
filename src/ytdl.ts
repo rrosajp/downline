@@ -37,6 +37,10 @@ export class Downloader {
     return null;
   }
 
+  /**
+   *
+   * @throws an error if youtube-dl is missing
+   */
   async fetchInfoQuick(urls: string[], path: string, dataCallback: (data: DownloadableItemBasic | DownloadableItem) => void) {
     if (urls.length === 0) return;
 
@@ -49,6 +53,10 @@ export class Downloader {
     });
   }
 
+  /**
+   *
+   * @throws an error if youtube-dl is missing
+   */
   async fetchInfo(urls: string[], path: string, dataCallback: (data: DownloadableItem) => void) {
     if (urls.length === 0) return;
 
@@ -59,6 +67,31 @@ export class Downloader {
       if (item && "formats" in item) {
         dataCallback(item);
       }
+    });
+  }
+
+  /** Simply kills the child process */
+  async pause(id: string) {
+    const child = this.runningProcesses.get(id);
+    if (child) {
+      try {
+        await child.kill();
+      } catch (e) {
+        console.warn(e);
+      }
+      // And now the usual handler will take care of deleting the child process
+    }
+  }
+
+  /**
+   *
+   * @throws an error if youtube-dl is missing
+   */
+  async updateYoutubeDl(path: string, dataCallback: (message: string) => void) {
+    const args = this.updateYoutubeDlArgs();
+
+    return this.callYoutubeDl("update", path, args, (data) => {
+      dataCallback(data);
     });
   }
 
@@ -219,6 +252,11 @@ export class Downloader {
    * Calls youtube-dl with the given arguments and returns some info. Throws an error if youtube-dl cannot be found
    */
   private callYoutubeDl(id: string, path: string, args: string[], dataCallback: (data: any) => void) {
+    if (this.runningProcesses.get(id) !== undefined) {
+      console.warn(`Process with id ${id} is still running`);
+      return;
+    }
+
     const command = new shell.Command(path, args);
     console.info(path, args); // Always print this!
 
@@ -262,19 +300,6 @@ export class Downloader {
     });
   }
 
-  /** Simply kills the child process */
-  async pause(id: string) {
-    const child = this.runningProcesses.get(id);
-    if (child) {
-      try {
-        await child.kill();
-      } catch (e) {
-        console.warn(e);
-      }
-      // And now the usual handler will take care of deleting the child process
-    }
-  }
-
   // TODO: checkFfmpeg(path?: string)
   // TODO: downloadYoutubeDl() which tries to download it from multiple mirrors (first yt-dlc then youtube-dl)
   // https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest
@@ -283,7 +308,6 @@ export class Downloader {
   // Oh, it should also be able to ask the locally installed package manager to do so?
   // TODO: downloadFfmpeg() which tries to download it from multiple mirrors
   // Butt how? https://ffmpeg.org/download.html
-  // TODO: updateYoutubeDl() which tries to update the youtube-dl binary
 
   // TODO: download(item, args, ...) which reports {progress percentage, current progress status (fetching/downloading/converting), destination file path}
 }

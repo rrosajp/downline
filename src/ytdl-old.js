@@ -5,6 +5,7 @@ const path = require("path");
 const fse = require("fs-extra");
 
 class YTDL {
+  ///////////// Done /////////////
   constructor() {
     const userDataPath = (electron.app || electron.remote.app).getPath("userData");
 
@@ -119,6 +120,63 @@ class YTDL {
     return true;
   }
 
+  /* Pauses download of given URL by killing its child process */
+  pause(url) {
+    const index = this.ongoing.findIndex((x) => x.url == url);
+
+    if (index !== -1) {
+      process.kill(this.ongoing[index].pid);
+    }
+  }
+
+  /* Converts seconds to hh:mm:ss format */
+  _formatDuration(seconds) {
+    if (seconds) {
+      let duration = new Date(null);
+      duration.setSeconds(seconds);
+      // Extract string containing hh:mm:ss
+      duration = duration.toISOString().substr(11, 8);
+      // Remove unwanted zeros and return
+      if (duration[0] != "0") {
+        return duration;
+      } else if (duration[1] != "0") {
+        return duration.substr(1);
+      } else if (duration[3] != "0") {
+        return duration.substr(3);
+      } else {
+        return duration.substr(4);
+      }
+    }
+    return "N/A";
+  }
+
+  /* Updates youtube-dl binary */
+  update(setMessage) {
+    // Rename to updateBinary
+    this.resourcesReady.then(() => {
+      const child = spawn(this.ytdlPath, ["--update"]);
+
+      child.stdout.on("data", (data) => {
+        const message = data.toString();
+        console.log(message);
+        let match;
+        if (/youtube-dl\sis\sup-to-date/.exec(message)) {
+          setMessage("No updates available", 0);
+        } else if ((match = /Updating\sto\sversion\s([\d.]+)/.exec(message)) != null) {
+          setMessage(`Updating to version ${match[1]}`, 1);
+        } else if (/Updated\syoutube-dl/.exec(message)) {
+          setMessage("Updated successfully", 0);
+        } else if (/ERROR:\sno\swrite\spermissions/) {
+          setMessage("ERROR: Unable to update", 0);
+        } else {
+          setMessage(message);
+        }
+      });
+    });
+  }
+
+  ///////////// TODO: /////////////
+
   /* Downloads an item */
   download({ item, outputFormat, audioFormat, videoFormat, onStart, onDownload, onComplete }) {
     console.log(audioFormat, videoFormat);
@@ -197,61 +255,6 @@ class YTDL {
 
   _isPostprocessing(data) {
     return /\[ffmpeg\]/.exec(data) != null;
-  }
-
-  /* Pauses download of given URL by killing its child process */
-  pause(url) {
-    const index = this.ongoing.findIndex((x) => x.url == url);
-
-    if (index !== -1) {
-      process.kill(this.ongoing[index].pid);
-    }
-  }
-
-  /* Converts seconds to hh:mm:ss format */
-  _formatDuration(seconds) {
-    if (seconds) {
-      let duration = new Date(null);
-      duration.setSeconds(seconds);
-      // Extract string containing hh:mm:ss
-      duration = duration.toISOString().substr(11, 8);
-      // Remove unwanted zeros and return
-      if (duration[0] != "0") {
-        return duration;
-      } else if (duration[1] != "0") {
-        return duration.substr(1);
-      } else if (duration[3] != "0") {
-        return duration.substr(3);
-      } else {
-        return duration.substr(4);
-      }
-    }
-    return "N/A";
-  }
-
-  /* Updates youtube-dl binary */
-  update(setMessage) {
-    // Rename to updateBinary
-    this.resourcesReady.then(() => {
-      const child = spawn(this.ytdlPath, ["--update"]);
-
-      child.stdout.on("data", (data) => {
-        const message = data.toString();
-        console.log(message);
-        let match;
-        if (/youtube-dl\sis\sup-to-date/.exec(message)) {
-          setMessage("No updates available", 0);
-        } else if ((match = /Updating\sto\sversion\s([\d.]+)/.exec(message)) != null) {
-          setMessage(`Updating to version ${match[1]}`, 1);
-        } else if (/Updated\syoutube-dl/.exec(message)) {
-          setMessage("Updated successfully", 0);
-        } else if (/ERROR:\sno\swrite\spermissions/) {
-          setMessage("ERROR: Unable to update", 0);
-        } else {
-          setMessage(message);
-        }
-      });
-    });
   }
 
   downloadBinary() {}

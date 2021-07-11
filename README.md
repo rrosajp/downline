@@ -14,7 +14,7 @@
 
 ## Features
 
-- Works for links from [several sites](https://rg3.github.io/youtube-dl/supportedsites.html)
+- Works for links from [several sites](https://ytdl-org.github.io/youtube-dl/supportedsites.html)
 - Choose audio and video quality (with support for 4K videos)
 - Convert audio to multiple formats `(mp3, aac, m4a and more)`
 - Convert video to multiple formats `(mp4, webm, mkv)`

@@ -268,6 +268,9 @@ import { throttle } from "@github/mini-throttle";
 
 // TODO: Auto-updater
 // TODO: Clipboard
+// TODO: Update readme
+// TODO: Update website
+// TODO: Advertise a bit
 
 event.listen("tauri://close-requested", () => {
   store.save();
@@ -782,17 +785,18 @@ export default defineComponent({
     }
 
     /** Update Youtube-DL */
-    function update() {
+    async function update() {
+      if (ytdlDownloading.value) return;
       ytdlUpdateMessage.value = "loading";
+      ytdlDownloading.value = true;
+      await downloader
+        .updateYoutubeDl(store.data.ytdl.path, (message) => {
+          ytdlUpdateMessage.value = message;
+        })
+        .catch((error) => {
+          ytdlUpdateMessage.value = "Failed to update " + error;
+        });
       ytdlDownloading.value = false;
-      ytdl.update((message, status) => {
-        ytdlUpdateMessage.value = message;
-        if (status == 1) {
-          ytdlDownloading.value = true;
-        } else {
-          ytdlDownloading.value = false;
-        }
-      });
     }
 
     function formatDuration(seconds: number) {
