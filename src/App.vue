@@ -530,6 +530,7 @@ export default defineComponent({
       } else {
         // Get link from clipboard
         // TODO: Hopefully the next Tauri update gets clipboard support
+        // Or maybe rewrite this too in Rust? (Like, a purely Rust based fetchInfo function!)
         newURL.value = clipboard.readText();
       }
     }

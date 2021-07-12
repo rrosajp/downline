@@ -8,6 +8,8 @@
   "scripts": {
     "start": "tauri dev",
     "dev": "tauri dev",
+    "build:debug": "tauri build --debug",
+    "build": "tauri build",
     "tauri": "tauri"
   },
   "dependencies": {

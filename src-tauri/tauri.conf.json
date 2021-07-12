@@ -7,7 +7,7 @@
     "distDir": "../dist",
     "devPath": "http://localhost:8080/",
     "beforeDevCommand": "vite --port 8080",
-    "beforeBuildCommand": ""
+    "beforeBuildCommand": "vite build"
   },
   "tauri": {
     "bundle": {
