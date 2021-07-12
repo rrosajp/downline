@@ -226,7 +226,7 @@ export class Downloader {
     }
 
     args.push("--embed-subs"); // Subtitles (TODO: Does this need --write-subs)
-    args.push("--embed-thumbnail"); // Pretty thumbnails (TODO: Does this need --write-thumbnail )
+    args.push("--embed-thumbnail"); // Pretty thumbnails
     //args.push("--embed-metadata"); // More metadata (TODO: Youtube-dl doesn't understand this)
 
     // TODO: --limit-rate

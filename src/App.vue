@@ -228,7 +228,7 @@
       </div>
     </section>
     <section id="about" v-else-if="activeTab === 'about'">
-      <header @click="openLink('https://jarbun.github.io/downline/')">
+      <header @click="openLink('https://stefnotch.github.io/downline/')">
         <img src="/icon.png" />
         <span>Downline</span>
       </header>
@@ -262,15 +262,26 @@ import { defineComponent, reactive, ref, computed, watch, toRef } from "vue";
 import { app, event, shell, path, dialog } from "@tauri-apps/api";
 import { useStore } from "./store";
 import { DownloadableItem, Downloader } from "./ytdl";
-import { debounce, throttle } from "@github/mini-throttle";
+import { debounce } from "@github/mini-throttle";
 
-// TODO: Check if simply putting youtube-dl.exe next to this exe works
+// TODO: Simply putting this next to a youtube-dl.exe works, except that the antivirus program will hate you for it. Weird.
 
 // TODO: Auto-updater
 // TODO: Clipboard
 // TODO: Update readme
 // TODO: Update website
 // TODO: Advertise a bit
+// TODO: Rewrite in Rust candidates
+// - findYoutubeDl(path) which checks if there is a valid youtube-dl at a given path and returns the version and notes it down so that later function calls can simply use that youtube-dl
+// - findYoutubeDl() which checks if there is a valid youtube-dl in some 'expected' location (youtube-dl, yt-dlp, and also the %appdata% directory of the application) and notes it down
+// - callYoutubeDl()
+// - download() which also has to deal with stuff like path manipulations
+// - path.downloadDir()
+// - showInFolder(item path)
+// - openLink(homepage/authorStefnotch/authorJarbun)
+// - downloadYoutubeDl
+// - downloadFfmpeg
+// - findFfmpeg
 
 event.listen("tauri://close-requested", () => {
   store.save();
