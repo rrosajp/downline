@@ -33,15 +33,7 @@ To support this project, you can [donate to the developer](https://www.paypal.co
 
 ## Developer Instructions
 
-After downloading the source code, add the platform specific versions of youtube-dl and ffmpeg for the current platform as shown:
-
-```
-resources
-├ ffmpeg
-│ └ ffmpeg.exe
-└ youtube-dl
-  └ youtube-dl.exe
-```
+After downloading the source code and having installed all the [prerequesites for your system](https://tauri.studio/en/docs/getting-started/intro)
 
 Install dependencies:
 
@@ -49,7 +41,7 @@ Install dependencies:
 npm install
 ```
 
-Running the app in development mode (so you can edit without having to restart the app everytime) requires `src/index.html` to be served from a local server on port 5500 (Ex:`http://127.0.0.1:5500/src/index.html`). You can use any program of your choice to serve the files or use the `vscode live server` extension if you're developing the app on VSCode. Once you've set up the server:
+Running the app in development mode (so you can edit without having to restart the app everytime):
 
 ```
 npm run dev
@@ -57,62 +49,26 @@ npm run dev
 
 ### Build Instructions
 
-Before proceeding with the build steps, create a folder named `releases` in the root directory.
-The build process performs the following steps:
+1. [Install the prerequesites for your system](https://tauri.studio/en/docs/getting-started/intro)
+2. `npm install`
+3. `npm run build`
 
-- Clean output directories (removes `dist` and removes files from `releases`)
-- Build distributable(s) for target platform(s)
-- Compress portable distributions (requires `tar` and `7z`)
-- Rename distributables in the format `downline-{version}-{type}-{platform}.{ext}`
-- Move all distributables to `releases` folder
-
-Place the dependencies for the target platform (e.g. for windows) in a folder as shown:
-
-```
-resources
-│ ...
-└ win
-  ├ ffmpeg
-  │ └ ffmpeg.exe
-  └ youtube-dl
-    └ youtube-dl.exe
-```
-
-Build for the target platform (`win`, `mac` or `linux`):
-
-```
-npm run build:platform
-```
-
-Build for all three platforms in parallel:
-
-```
-npm run build:all
-```
-
-If you would like to build for a platform without all the extra build steps (or `npm run build:platform` fails), run:
-
-```
-./node_modules/.bin/electron-builder build --platform
-```
-
-## Credits
-
-- [youtube-dl](https://github.com/rg3/youtube-dl/)
-- [ffmpeg](https://ffmpeg.org/)
-- [electron](https://electronjs.org/)
-- [electron-builder](https://www.electron.build/)
-- [vuejs](https://vuejs.org/)
-- [vite tauri template](https://github.com/yooneskh/vite-tauri-template)
-- [tauri](https://tauri.studio/)
-
-## Legal
-
-This software is distributed under the [MIT license](https://github.com/stefnotch/downline/blob/master/LICENSE).
-
-## Updating
-
+When publishing a new release, don't forget to update
 - package.json
 - tauri.conf.json
 - store.ts migration
 - https://github.com/stefnotch/downline/tree/gh-pages
+
+## Credits
+
+- [youtube-dl](https://github.com/ytdl-org/youtube-dl/)
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp)
+- [ffmpeg](https://ffmpeg.org/)
+- [tauri](https://tauri.studio/)
+- [vuejs](https://vuejs.org/)
+- [esbuild](https://github.com/evanw/esbuild)
+- [vite tauri template](https://github.com/yooneskh/vite-tauri-template)
+
+## Legal
+
+This software is distributed under the [MIT license](https://github.com/stefnotch/downline/blob/master/LICENSE).
