@@ -17,7 +17,7 @@
 
     <section id="center" :class="{ 'center-height': showMoreOptions }">
       <transition-group name="fade">
-        <div class="downloadable" :class="{ chosen: item.isChosen }" v-for="item in downloadables" :key="item.url">
+        <div class="downloadable" :class="{ chosen: item.isChosen }" v-for="item in store.data.downloadables" :key="item.url">
           <section class="left">
             <img :src="item.thumbnail" onerror="this.src='./static/images/placeholder.png'" />
             <span class="fas fa-play-circle" v-if="item.state === 'stopped'" @click="download(item.url)"></span>
@@ -120,7 +120,7 @@
             data-tooltip="Audio Only"
             v-if="anyToBeDownloaded"
             :class="{ selected: multiDownloadItem.isAudioChosen }"
-            @click="updateIsAudioChosen(modifiableItems, !multiDownloadItem.isSubsChosen)"
+            @click="updateIsAudioChosen(modifiableItems, !multiDownloadItem.isAudioChosen)"
           >
           </span>
         </div>
@@ -140,7 +140,9 @@
         <span id="show-hide" @click="toggleShowMore">
           <span class="fas fa-angle-up" :class="{ 'rotate-arrow': showMoreOptions }"></span>
         </span>
-        <span :class="{ hidden: !existsItems }" id="status"> {{ downloadables.length == 1 ? "1 Item" : downloadables.length + " Items" }} </span>
+        <span :class="{ hidden: !existsItems }" id="status">
+          {{ store.data.downloadables.length == 1 ? "1 Item" : store.data.downloadables.length + " Items" }}
+        </span>
       </div>
     </section>
   </section>
@@ -260,11 +262,9 @@ import { defineComponent, reactive, ref, computed, watch, toRef } from "vue";
 import { app, event, shell, path, dialog } from "@tauri-apps/api";
 import { useStore } from "./store";
 import { DownloadableItem, Downloader } from "./ytdl";
-import { throttle } from "@github/mini-throttle";
+import { debounce, throttle } from "@github/mini-throttle";
 
 // TODO: Check if simply putting youtube-dl.exe next to this exe works
-// TODO: Get ytdl.js to work (Javascript for now)
-// TODO: Finish hooking up the store (store.get('downloadables') and co.)
 
 // TODO: Auto-updater
 // TODO: Clipboard
@@ -323,8 +323,6 @@ export default defineComponent({
 
     const newURL = ref("");
     const showMoreOptions = ref(false);
-    const downloadables = reactive<DownloadableItem[]>([]); // TODO: store.get('downloadables'),
-    const downloadLocation = ref(""); // remove
     const etag = ref(""); // remove
     const latestVersion = ref(""); // remove
     const audioFormats = reactive(Downloader.audioFormats);
@@ -362,28 +360,25 @@ export default defineComponent({
       { immediate: true }
     );
     {
-      const checkThrottled = throttle(
-        (path: string) => {
+      // TODO: Those promises don't have to terminate in the 'correct' order. Fix that by rewriting it in Rust :)
+      const checkDebounced = debounce(
+        (path: string) =>
           downloader.checkYoutubeDl([path]).then((result) => {
             store.data.ytdl.valid = result !== null;
             store.data.ytdl.version = result?.version;
-          });
-        },
-        500,
-        {
-          middle: false,
-        }
+          }),
+        100
       );
 
       watch(
         () => store.data.ytdl.path,
-        (value) => checkThrottled(value)
+        (value) => checkDebounced(value)
       );
     }
 
     /**  Returns selected items if any, otherwise all items, that are not yet complete */
     const chosenItems = computed(() => {
-      return downloadables.filter((x) => (x.isChosen || !anyChosen.value) && x.state !== "completed");
+      return store.data.downloadables.filter((x) => (x.isChosen || !anyChosen.value) && x.state !== "completed");
     });
 
     /**  Returns items that are yet to be downloaded */
@@ -408,18 +403,16 @@ export default defineComponent({
 
     /**  Returns true if any modifiable items are completed */
     const anyCompleted = computed(() => {
-      return downloadables.some((x) => (x.isChosen || !anyChosen.value) && x.state === "completed");
+      return store.data.downloadables.some((x) => (x.isChosen || !anyChosen.value) && x.state === "completed");
     });
 
     /**  Returns true if any item is chosen */
-    const anyChosen = computed(() => downloadables.some((x) => x.isChosen));
+    const anyChosen = computed(() => store.data.downloadables.some((x) => x.isChosen));
 
-    const existsItems = computed(() => downloadables.length !== 0);
+    const existsItems = computed(() => store.data.downloadables.length !== 0);
 
-    // TODO: Maybe I'll need deep watchers
     const multiDownloadItem = computed(() => {
       const globalItem: MultipleDownloadableItem = {
-        // TODO: Do a better job at showing 'multiple different values' (e.g. 2 true, 1 false)
         isSubsChosen: modifiableItems.value.every((x) => x.subtitles.length === 0 || x.isSubsChosen),
         isAudioChosen: modifiableItems.value.every((x) => x.isAudioChosen),
         formats: {
@@ -431,21 +424,15 @@ export default defineComponent({
       };
 
       // Set audio and video to union of all audio and video formats
-      modifiableItems.value.forEach((x) => {
-        globalItem.formats.video.push(...x.formats.video);
-        globalItem.formats.audio.push(...x.formats.audio);
-      });
-
-      globalItem.formats.video = Array.from(new Set(globalItem.formats.video));
-      globalItem.formats.audio = Array.from(new Set(globalItem.formats.audio));
+      globalItem.formats.video = Array.from(new Set(modifiableItems.value.flatMap((v) => v.formats.video)));
+      globalItem.formats.audio = Array.from(new Set(modifiableItems.value.flatMap((v) => v.formats.audio)));
 
       // Sort in ascending order
       globalItem.formats.video.sort((a, b) => a - b);
       globalItem.formats.audio.sort((a, b) => a - b);
 
-      // TODO: Do a better job at showing the 'combined' video index
-      globalItem.formats.videoIndex = globalItem.formats.video.length - 1;
-      globalItem.formats.audioIndex = globalItem.formats.audio.length - 1;
+      globalItem.formats.videoIndex = modifiableItems.value.map((v) => v.formats.videoIndex).reduce((p, v) => (p > v ? p : v), 0);
+      globalItem.formats.audioIndex = modifiableItems.value.map((v) => v.formats.audioIndex).reduce((p, v) => (p > v ? p : v), 0);
 
       return globalItem;
     });
@@ -482,7 +469,7 @@ export default defineComponent({
       } else {
         // Else unselect all
         showMoreOptions.value = false;
-        downloadables.forEach((x) => (x.isChosen = false));
+        store.data.downloadables.forEach((x) => (x.isChosen = false));
       }
     }
 
@@ -524,7 +511,8 @@ export default defineComponent({
         isLoading.value = true;
 
         try {
-          await downloader.fetchInfoQuick([newURL.value], store.data.ytdl.path, (item) => {
+          // TODO: Use fetchInfoQuick
+          await downloader.fetchInfo([newURL.value], store.data.ytdl.path, (item) => {
             if ("formats" in item) {
               addItem(item);
             } else {
@@ -548,15 +536,15 @@ export default defineComponent({
 
     function addItem(item: DownloadableItem) {
       // Add downloadable to list if not already present
-      if (downloadables.findIndex((x) => x.url === item.url) === -1) {
-        downloadables.push(item); // TODO: Use unshift? What about playlists? Or should I have item groups?
+      if (store.data.downloadables.findIndex((x) => x.url === item.url) === -1) {
+        store.data.downloadables.push(item); // TODO: Use unshift? What about playlists? Or should I have item groups?
       }
     }
 
     async function download(url: string | undefined) {
       if (url === undefined) return;
 
-      const item = downloadables.find((x) => x.url === url);
+      const item = store.data.downloadables.find((x) => x.url === url);
       if (!item) return;
 
       // Stop if an invalid quality is chosen
@@ -584,9 +572,10 @@ export default defineComponent({
               item,
               {
                 outputTemplate: outputFormat,
-                downloadLocation: downloadLocation.value, // TODO: Append `item.playlist.title`
+                downloadLocation: store.data.downloadLocation, // TODO: Append `item.playlist.title`
                 videoFormat: videoFormats[store.data.videoFormatIndex],
                 audioFormat: audioFormats[store.data.audioFormatIndex],
+                compatibilityMode: /youtube-dl(\.exe)?$/.test(store.data.ytdl.path),
               },
               store.data.ytdl.path,
               (data) => {
@@ -617,32 +606,32 @@ export default defineComponent({
 
     // TODO: This is a reactive function??
     function progressValue(url: string) {
-      const value = downloadables.find((x) => x.url === url)?.progress?.value ?? 0;
+      const value = store.data.downloadables.find((x) => x.url === url)?.progress?.value ?? 0;
       return { width: `${value}%` };
     }
 
     function clear(url: string) {
       pause(url);
-      const index = downloadables.findIndex((x) => x.url === url);
+      const index = store.data.downloadables.findIndex((x) => x.url === url);
 
-      downloadables.splice(index, 1);
+      store.data.downloadables.splice(index, 1);
     }
 
     function clearCompleted() {
-      undo.downloadables = downloadables.slice();
+      undo.downloadables = store.data.downloadables.slice();
 
-      downloadables.filter((x) => x.state === "completed").forEach((x) => clear(x.url));
+      store.data.downloadables.filter((x) => x.state === "completed").forEach((x) => clear(x.url));
     }
 
     function clearMany() {
-      undo.downloadables = downloadables.slice();
+      undo.downloadables = store.data.downloadables.slice();
 
-      downloadables.filter((x) => x.isChosen || !anyChosen.value).forEach((x) => clear(x.url));
+      store.data.downloadables.filter((x) => x.isChosen || !anyChosen.value).forEach((x) => clear(x.url));
     }
 
     function undoClear() {
       if (undo.downloadables !== undefined) {
-        downloadables.push(...undo.downloadables);
+        store.data.downloadables.push(...undo.downloadables);
         undo.downloadables = undefined;
       }
     }
@@ -652,7 +641,7 @@ export default defineComponent({
     }
 
     function pause(url: string) {
-      const item = downloadables.find((x) => x.url === url);
+      const item = store.data.downloadables.find((x) => x.url === url);
       if (!item) return;
       if (item.state === "downloading") {
         item.state = "stopped";
@@ -676,19 +665,19 @@ export default defineComponent({
     function downloadOrPauseMany() {
       if (areChosenDownloading.value) {
         // Pause all chosen
-        downloadables.forEach((x) => {
+        store.data.downloadables.forEach((x) => {
           if ((x.isChosen || !anyChosen.value) && x.state !== "completed") pause(x.url);
         });
       } else {
         // Download all chosen
-        downloadables.forEach((x) => {
+        store.data.downloadables.forEach((x) => {
           if ((x.isChosen || !anyChosen.value) && x.state === "stopped") download(x.url);
         });
       }
     }
 
     function restart(url: string) {
-      const item = downloadables.find((x) => x.url === url);
+      const item = store.data.downloadables.find((x) => x.url === url);
       if (!item) return;
 
       item.filepath = undefined;
@@ -822,7 +811,6 @@ export default defineComponent({
 
       newURL,
       showMoreOptions,
-      downloadables,
       etag,
       latestVersion,
       audioFormats,

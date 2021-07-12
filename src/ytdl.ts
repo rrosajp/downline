@@ -131,12 +131,16 @@ export class Downloader {
         if (filePathMatch && filePathMatch[1]) {
           filePath = filePathMatch[1];
         }
+      } else if (data.startsWith("[Merger]")) {
+        const mergerString = data.replace(/^\[Merger\]\s*/, "");
+
+        let filePathMatch = /^Merging formats into "(.+)"/.exec(mergerString);
+        if (filePathMatch && filePathMatch[1]) {
+          filePath = filePathMatch[1];
+        }
       }
 
-      // TODO:
-      /*
-      [Merger] Merging formats into "Promise (Harumaki Gohan)  English Cover Sayri .mkv"
-      [Merger] Merging formats into "Promise (Harumaki Gohan)  English Cover Sayri .mkv"*/
+      // TODO: Handle le case where the format isn't available in that specific resolution
 
       const result = {
         progress: progress,
@@ -185,7 +189,7 @@ export class Downloader {
     return args;
   }
 
-  private downloadArgs(item: DownloadableItem, { videoFormat, audioFormat, downloadLocation, outputTemplate }: DownloadOptions) {
+  private downloadArgs(item: DownloadableItem, { videoFormat, audioFormat, downloadLocation, outputTemplate, compatibilityMode }: DownloadOptions) {
     const args = [];
 
     // Progress bar
@@ -197,19 +201,18 @@ export class Downloader {
     // Choose format (file extension)
     if (item.isAudioChosen) {
       args.push("--format");
-
       let format = `best*[vcodec=none]${audioQuality}`; // Pick best format by default
       if (audioFormat !== "best") {
         // Pick format with a given extension
-        format = `ba[ext=${audioFormat}]${audioQuality} / ${format}`;
+        format = `bestaudio[ext=${audioFormat}]${audioQuality} / ${format}`;
       }
       args.push(format);
     } else {
       args.push("--format");
-      let format = `bv*${videoQuality}+ba${videoQuality}/b${videoQuality}`; // Pick best format by default
+      let format = `bestvideo*${videoQuality}+bestaudio${videoQuality}/best${videoQuality}`; // Pick best format by default
       if (videoFormat !== "best") {
         // Pick format with a given extension
-        format = `bv*[ext=${videoFormat}]${videoQuality}+ba[ext=${videoFormat}]${videoQuality}/b[ext=${videoFormat}]${videoQuality} / ${format}`;
+        format = `bestvideo*[ext=${videoFormat}]${videoQuality}+bestaudio[ext=${videoFormat}]${videoQuality}/best[ext=${videoFormat}]${videoQuality} / ${format}`;
       }
       args.push(format);
     }
@@ -353,7 +356,6 @@ export class Downloader {
     // Data
     command.stdout.on("data", (data) => {
       // Every new playlist entry will be on its own line
-      console.log(data);
       dataCallback(data);
     });
     command.stderr.on("data", (error) => {
@@ -454,6 +456,7 @@ type DownloadOptions = {
   audioFormat: AudioFormat;
   downloadLocation: string;
   outputTemplate: string;
+  compatibilityMode: boolean;
 };
 
 function assertUnreachable(value: never): never {
