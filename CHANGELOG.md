@@ -1,3 +1,6 @@
+## v3.0.0 (unreleased)
+This update is a rewrite of Downline in Tauri. Based on preliminary numbers, this should get the filesize down to 10 MB.
+
 ## v1.3.1 (2019-06-03)
 This updates fixes a few (major) bugs, and adds a few features
 
