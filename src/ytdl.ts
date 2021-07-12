@@ -70,6 +70,84 @@ export class Downloader {
     });
   }
 
+  /**
+   *
+   * @throws an error if youtube-dl is missing
+   */
+  async download(
+    item: DownloadableItem,
+    downloadOptions: DownloadOptions,
+    path: string,
+    dataCallback: (data: { progress: DownloadProgress | null; progressStatus: string; filepath: string | null }) => void
+  ) {
+    const args = this.downloadArgs(item, downloadOptions);
+
+    return this.callYoutubeDl(item.url, path, args, (data: string) => {
+      console.log(data);
+
+      data = ((data ?? "") + "").trimStart();
+
+      let progress: null | DownloadProgress = {
+        value: 0,
+      };
+
+      let filePath: null | string = null;
+
+      if (data.startsWith("[download]")) {
+        const downloadString = data.replace(/^\[download\]\s*/, "");
+
+        if (downloadString.startsWith("Unknown %")) {
+          progress.value = 0;
+        } else {
+          let match = /^(?<percentage>\d+(?:\.\d+)?)%/.exec(downloadString);
+          if (match && match[1]) {
+            progress.value = +match[1];
+          } else {
+            progress = null;
+          }
+        }
+
+        if (progress != null) {
+          // TODO: Finish progress: https://github.com/ytdl-org/youtube-dl/blob/5208ae92fc3e2916cdccae45c6b9a516be3d5796/youtube_dl/downloader/common.py#L289-L304
+          // \[download\][^0-9]*(?<percentage>\d+(?:\.\d+)?)[^0-9]+(?<size>\d+(?:\.\d+)?)(?<size_unit>\w+)(?:[^0-9]+(\d+\.\d+\w+\/s)\D+((?:\d+:?)+))?
+        }
+
+        // [download] Destination: ...
+        // [download] ... has already been downloaded
+        let filePathMatch = /^Destination:\s?(.+)|^(.+)\shas already been downloaded/.exec(downloadString);
+        if (filePathMatch && filePathMatch[1]) {
+          filePath = filePathMatch[1];
+        }
+      } else if (data.startsWith("[ffmpeg]")) {
+        const ffmpegString = data.replace(/^\[ffmpeg\]\s*/, "");
+        // Encountered during merging of audio and video
+        let filePathMatch = /.*?\"(.*)\"/.exec(ffmpegString);
+        if (filePathMatch && filePathMatch[1]) {
+          filePath = filePathMatch[1];
+        }
+
+        // Encountered during format conversion
+        filePathMatch = /.*?Destination:\s(.*)/.exec(ffmpegString);
+        if (filePathMatch && filePathMatch[1]) {
+          filePath = filePathMatch[1];
+        }
+      }
+
+      // TODO:
+      /*
+      [Merger] Merging formats into "Promise (Harumaki Gohan)  English Cover Sayri .mkv"
+      [Merger] Merging formats into "Promise (Harumaki Gohan)  English Cover Sayri .mkv"*/
+
+      const result = {
+        progress: progress,
+        progressStatus: "petting cats", //this._isPostprocessing(data.toString()),
+        filepath: filePath,
+      };
+
+      dataCallback(result);
+    });
+  }
+
   /** Simply kills the child process */
   async pause(id: string) {
     const child = this.runningProcesses.get(id);
@@ -107,18 +185,11 @@ export class Downloader {
     return args;
   }
 
-  private downloadArgs({
-    item,
-    videoFormat,
-    audioFormat,
-    outputTemplate,
-  }: {
-    item: DownloadableItem;
-    videoFormat: VideoFormat;
-    audioFormat: AudioFormat;
-    outputTemplate: string;
-  }) {
+  private downloadArgs(item: DownloadableItem, { videoFormat, audioFormat, downloadLocation, outputTemplate }: DownloadOptions) {
     const args = [];
+
+    // Progress bar
+    args.push("--newline");
 
     let audioQuality = item.formats.audioIndex === item.formats.audio.length - 1 ? "" : `[abr<=${item.formats.audio[item.formats.audioIndex]}]`;
     let videoQuality = item.formats.videoIndex === item.formats.video.length - 1 ? "" : `[height<=${item.formats.video[item.formats.videoIndex]}]`;
@@ -145,18 +216,37 @@ export class Downloader {
 
     // Output file name
     if ((outputTemplate + "").trim().length > 0) {
+      // TODO: Put in correct folder (path join)
+      // https://github.com/ytdl-org/youtube-dl#how-do-i-put-downloads-into-a-specific-folder
+      // downloadLocation
       args.push(...["--output", outputTemplate]);
     }
 
     args.push("--embed-subs"); // Subtitles (TODO: Does this need --write-subs)
     args.push("--embed-thumbnail"); // Pretty thumbnails (TODO: Does this need --write-thumbnail )
-    args.push("--embed-metadata"); // More metadata
+    //args.push("--embed-metadata"); // More metadata (TODO: Youtube-dl doesn't understand this)
 
     // TODO: --limit-rate
 
     // https://github.com/yt-dlp/yt-dlp#post-processing-options
     // TODO: Optionally convert it with ffmpeg, if ffmpeg exists
+    /*
+    
+    let args;
+    if (item.isSubsChosen && item.subtitles.length !== 0) {
+      // Download and embed subtitles
+      args = ["--ffmpeg-location", this.ffmpegPath, "--all-subs", "--embed-subs", "-f", format, "-o", outputFormat];
+    } else {
+      args = ["--ffmpeg-location", this.ffmpegPath, "-f", format, "-o", outputFormat];
+    }
 
+    if (item.isAudioChosen) {
+      args.push(...["--extract-audio", "--audio-format", audioFormat]);
+    } else if (videoFormat != "default") {
+      args.push(...["--recode-video", videoFormat]);
+    }*/
+
+    args.push("--");
     args.push(item.url);
 
     return args;
@@ -308,8 +398,7 @@ export class Downloader {
   // Oh, it should also be able to ask the locally installed package manager to do so?
   // TODO: downloadFfmpeg() which tries to download it from multiple mirrors
   // Butt how? https://ffmpeg.org/download.html
-
-  // TODO: download(item, args, ...) which reports {progress percentage, current progress status (fetching/downloading/converting), destination file path}
+  // TODO: Better playlist support https://github.com/ytdl-org/youtube-dl#how-do-i-download-only-new-videos-from-a-playlist
 }
 
 export interface DownloadableItemBasic {
@@ -340,12 +429,7 @@ export interface DownloadableItem extends DownloadableItemBasic {
     audioIndex: number;
   };
   subtitles: string[];
-  progress: {
-    value: number;
-    size?: string;
-    speed?: string;
-    eta?: string;
-  };
+  progress: DownloadProgress;
   playlist?: {
     entries: number;
     title: string;
@@ -354,9 +438,23 @@ export interface DownloadableItem extends DownloadableItemBasic {
   };
 }
 
+type DownloadProgress = {
+  value: number;
+  size?: string;
+  speed?: string;
+  eta?: string;
+};
+
 // TODO: Rename to VideoExtension
 type VideoFormat = typeof Downloader.videoFormats[number];
 type AudioFormat = typeof Downloader.audioFormats[number];
+
+type DownloadOptions = {
+  videoFormat: VideoFormat;
+  audioFormat: AudioFormat;
+  downloadLocation: string;
+  outputTemplate: string;
+};
 
 function assertUnreachable(value: never): never {
   throw new Error("Didn't expect to get here" + value);

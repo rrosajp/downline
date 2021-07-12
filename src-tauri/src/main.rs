@@ -60,7 +60,6 @@ fn save_store(app_handle: tauri::AppHandle, data: String) {
       println!("No Tauri config");
     }
   }
-  println!("I was invoked from JS!");
 }
 
 fn main() {

@@ -553,7 +553,7 @@ export default defineComponent({
       }
     }
 
-    function download(url: string | undefined) {
+    async function download(url: string | undefined) {
       if (url === undefined) return;
 
       const item = downloadables.find((x) => x.url === url);
@@ -566,44 +566,49 @@ export default defineComponent({
         item.state = "downloading";
 
         let outputFormat;
-        if (item.playlist.exists && store.data.autonumberItems) {
-          outputFormat = path.join(downloadLocation.value, item.playlist.title, `${item.playlist.index} - %(title)s.%(ext)s`);
-          item.filepath = path.join(downloadLocation.value, item.playlist.title, "*");
-        } else if (item.playlist.exists) {
-          outputFormat = path.join(downloadLocation.value, item.playlist.title, "%(title)s.%(ext)s");
-          item.filepath = path.join(downloadLocation.value, item.playlist.title, "*");
+        if (item.playlist && store.data.autonumberItems) {
+          outputFormat = `${item.playlist.index} - %(title)s.%(ext)s`;
+          //item.filepath = path.join(downloadLocation.value, item.playlist.title, "*");
+        } else if (item.playlist) {
+          outputFormat = "%(title)s.%(ext)s";
+          //item.filepath = path.join(downloadLocation.value, item.playlist.title, "*");
         } else {
-          outputFormat = path.join(downloadLocation.value, "%(title)s.%(ext)s");
-          item.filepath = path.join(downloadLocation.value, "*");
+          outputFormat = "%(title)s.%(ext)s";
+          //item.filepath = path.join(downloadLocation.value, "*");
         }
 
         ongoingDownloads.value++;
-
-        ytdl.download({
-          item: item,
-          outputFormat: outputFormat,
-          audioFormat: audioFormats[store.data.audioFormatIndex],
-          videoFormat: videoFormats[store.data.videoFormatIndex],
-          onStart: () => console.log("Download Started"),
-          onDownload: (url, { progress, filepath, isPostprocessing }) => {
-            const item = downloadables.find((x) => x.url === url);
-            if (!item) return;
-            if (progress != null) item.progress = progress;
-            if (filepath != null) item.filepath = filepath;
-            if (isPostprocessing) item.state = "postprocessing";
-          },
-          onComplete: (url) => {
-            const item = downloadables.find((x) => x.url === url);
-            if (!item) return;
-            // If process was exit after downloading and not after pausing
-            if (item.state === "downloading" || item.state === "postprocessing") {
-              item.state = "completed";
-
+        try {
+          await downloader
+            .download(
+              item,
+              {
+                outputTemplate: outputFormat,
+                downloadLocation: downloadLocation.value, // TODO: Append `item.playlist.title`
+                videoFormat: videoFormats[store.data.videoFormatIndex],
+                audioFormat: audioFormats[store.data.audioFormatIndex],
+              },
+              store.data.ytdl.path,
+              (data) => {
+                if (data.progress != null) item.progress = data.progress;
+                if (data.filepath != null) item.filepath = data.filepath;
+                // if (data.progressStatus) item.state = "postprocessing"; // TODO:
+              }
+            )
+            .finally(() => {
               ongoingDownloads.value--;
-              downloadFromQueue();
-            }
-          },
-        });
+            });
+        } catch (e) {
+          // TODO: Error during downloading
+          console.error(e);
+        }
+
+        // If process was exit after downloading and not after pausing
+        if (item.state === "downloading" || item.state === "postprocessing") {
+          item.state = "completed";
+        }
+
+        downloadFromQueue();
       } else {
         item.state = "queued";
         downloadQueue.push(url);

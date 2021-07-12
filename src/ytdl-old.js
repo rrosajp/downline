@@ -175,8 +175,6 @@ class YTDL {
     });
   }
 
-  ///////////// TODO: /////////////
-
   /* Downloads an item */
   download({ item, outputFormat, audioFormat, videoFormat, onStart, onDownload, onComplete }) {
     console.log(audioFormat, videoFormat);
@@ -233,6 +231,7 @@ class YTDL {
     });
   }
 
+  ///////////// TODO: /////////////
   /* Parses console output and returns progress info */
   _extractProgress(data) {
     const progressRegex = /\[download\]\D+(\d+\.\d+)\D+(\d+\.\d+\w+)\D+(\d+\.\d+\w+\/s)\D+((?:\d+:?)+)/;
