@@ -399,8 +399,14 @@ export class Downloader {
   // Take the .exe asset on Windows, and the no extension asset otherwise
   // Oh, it should also be able to ask the locally installed package manager to do so?
   // TODO: downloadFfmpeg() which tries to download it from multiple mirrors
-  // Butt how? https://ffmpeg.org/download.html
+  // https://api.github.com/repos/BtbN/youtube-dl/FFmpeg-Builds/latest with build ffmpeg-n4.4-78-g031c0cb0b4-win64-gpl-shared-4.4.zip
+  // needs unzipping (???)
+  // https://www.gyan.dev/ffmpeg/builds/
+  // https://github.com/GyanD/codexffmpeg/releases/tag/4.4 with build ffmpeg-4.4-essentials_build.7z
+  // needs un7zipping (???)
   // TODO: Better playlist support https://github.com/ytdl-org/youtube-dl#how-do-i-download-only-new-videos-from-a-playlist
+  // TODO: Wait, should we automatically download dependencies on linux? Or can we just politely ask the Linux-fu-masters to do it themselves?
+  // Windows Operating System detection in Rust https://doc.rust-lang.org/rust-by-example/attribute/cfg.html
 }
 
 export interface DownloadableItemBasic {
