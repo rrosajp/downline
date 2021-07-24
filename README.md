@@ -8,6 +8,8 @@
 
 **Download the latest version [here](https://github.com/stefnotch/downline/releases/latest)**.
 
+This project is on ice until [Microsoft ships Webview2 with Windows](https://github.com/MicrosoftEdge/WebView2Feedback/issues/348)
+
 ## Screenshots
 
 <p align="center">
