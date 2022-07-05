@@ -8,7 +8,7 @@
 
 **Download the latest version [here](https://github.com/stefnotch/downline/releases/latest)**.
 
-This project is on ice until [Microsoft ships Webview2 with Windows](https://github.com/MicrosoftEdge/WebView2Feedback/issues/348)
+Sweet, [Microsoft is shipping Webview2 with more and more Windows 10 machines](https://blogs.windows.com/msedgedev/2022/06/27/delivering-the-microsoft-edge-webview2-runtime-to-windows-10-consumers/). Downline updates incoming hopefully soon.
 
 ## Screenshots
 
