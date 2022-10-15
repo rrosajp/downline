@@ -51,6 +51,8 @@ Running the app in development mode (so you can edit without having to restart t
 npm run dev
 ```
 
+Note that it may take over a minute the first time you try this out
+
 ### Build Instructions
 
 1. [Install the prerequesites for your system](https://tauri.app/v1/guides/getting-started/prerequisites)
