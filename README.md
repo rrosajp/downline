@@ -53,7 +53,7 @@ npm run dev
 
 ### Build Instructions
 
-1. [Install the prerequesites for your system](https://tauri.studio/en/docs/getting-started/intro)
+1. [Install the prerequesites for your system](https://tauri.app/v1/guides/getting-started/prerequisites)
 2. `npm install`
 3. `npm run build`
 
