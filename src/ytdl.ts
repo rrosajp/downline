@@ -17,13 +17,26 @@ export class Downloader {
   /** Audio extension */
   static get audioFormats() {
     // No idea if I should remove some of those formats
-    return ["best", "m4a", "aac", "mp3", "ogg", "opus", "webm", "flac", "vorbis", "wav"] as const;
+    return [
+      "best",
+      "m4a",
+      "aac",
+      "mp3",
+      "ogg",
+      "opus",
+      "webm",
+      "flac",
+      "vorbis",
+      "wav",
+    ] as const;
   }
 
   /** Checks if youtube-dl or an alternative exists. Will return the version number, if possible */
   async checkYoutubeDl(pathsToCheck: string[]) {
     for (let i = 0; i < pathsToCheck.length; i++) {
-      const youtubeDlVersion = await this.checkIfBinaryExists(pathsToCheck[i], ["--version"]);
+      const youtubeDlVersion = await this.checkIfBinaryExists(pathsToCheck[i], [
+        "--version",
+      ]);
       if (youtubeDlVersion !== null) {
         return {
           binary: pathsToCheck[i],
@@ -41,7 +54,11 @@ export class Downloader {
    *
    * @throws an error if youtube-dl is missing
    */
-  async fetchInfoQuick(urls: string[], path: string, dataCallback: (data: DownloadableItemBasic | DownloadableItem) => void) {
+  async fetchInfoQuick(
+    urls: string[],
+    path: string,
+    dataCallback: (data: DownloadableItemBasic | DownloadableItem) => void
+  ) {
     if (urls.length === 0) return;
 
     const args = this.fetchInfoQuickArgs(urls);
@@ -57,7 +74,11 @@ export class Downloader {
    *
    * @throws an error if youtube-dl is missing
    */
-  async fetchInfo(urls: string[], path: string, dataCallback: (data: DownloadableItem) => void) {
+  async fetchInfo(
+    urls: string[],
+    path: string,
+    dataCallback: (data: DownloadableItem) => void
+  ) {
     if (urls.length === 0) return;
 
     const args = this.fetchInfoArgs(urls);
@@ -78,7 +99,11 @@ export class Downloader {
     item: DownloadableItem,
     downloadOptions: DownloadOptions,
     path: string,
-    dataCallback: (data: { progress: DownloadProgress | null; progressStatus: string; filepath: string | null }) => void
+    dataCallback: (data: {
+      progress: DownloadProgress | null;
+      progressStatus: string;
+      filepath: string | null;
+    }) => void
   ) {
     const args = await this.downloadArgs(item, downloadOptions);
 
@@ -114,7 +139,10 @@ export class Downloader {
 
         // [download] Destination: ...
         // [download] ... has already been downloaded
-        let filePathMatch = /^Destination:\s?(.+)|^(.+)\shas already been downloaded/.exec(downloadString);
+        let filePathMatch =
+          /^Destination:\s?(.+)|^(.+)\shas already been downloaded/.exec(
+            downloadString
+          );
         if (filePathMatch && filePathMatch[1]) {
           filePath = filePathMatch[1];
         }
@@ -185,18 +213,39 @@ export class Downloader {
 
   /** Fetches information for a list of URLs */
   private fetchInfoArgs(urls: string[]) {
-    const args = ["--all-subs", "--dump-json", "--no-playlist", "--ignore-errors", ...urls];
+    const args = [
+      "--all-subs",
+      "--dump-json",
+      "--no-playlist",
+      "--ignore-errors",
+      ...urls,
+    ];
     return args;
   }
 
-  private async downloadArgs(item: DownloadableItem, { videoFormat, audioFormat, downloadLocation, outputTemplate, compatibilityMode }: DownloadOptions) {
-    const args = [];
+  private async downloadArgs(
+    item: DownloadableItem,
+    {
+      videoFormat,
+      audioFormat,
+      downloadLocation,
+      outputTemplate,
+      compatibilityMode,
+    }: DownloadOptions
+  ) {
+    const args: string[] = [];
 
     // Progress bar
     args.push("--newline");
 
-    let audioQuality = item.formats.audioIndex === item.formats.audio.length - 1 ? "" : `[abr<=${item.formats.audio[item.formats.audioIndex]}]`;
-    let videoQuality = item.formats.videoIndex === item.formats.video.length - 1 ? "" : `[height<=${item.formats.video[item.formats.videoIndex]}]`;
+    let audioQuality =
+      item.formats.audioIndex === item.formats.audio.length - 1
+        ? ""
+        : `[abr<=${item.formats.audio[item.formats.audioIndex]}]`;
+    let videoQuality =
+      item.formats.videoIndex === item.formats.video.length - 1
+        ? ""
+        : `[height<=${item.formats.video[item.formats.videoIndex]}]`;
 
     // Choose format (file extension)
     if (item.isAudioChosen) {
@@ -217,10 +266,10 @@ export class Downloader {
       args.push(format);
     }
 
-    await invoke("generate_ytdl_config", {"downloadFolder": downloadLocation})
+    await invoke("generate_ytdl_config", { downloadFolder: downloadLocation });
 
-    const config_path = await invoke("get_ytdl_config_path")
-    args.push("--config-location", config_path)
+    const config_path = await invoke("get_ytdl_config_path");
+    args.push("--config-location", config_path);
 
     args.push("--embed-subs"); // Subtitles (TODO: Does this need --write-subs)
     args.push("--embed-thumbnail"); // Pretty thumbnails
@@ -269,20 +318,36 @@ export class Downloader {
     return null;
   }
 
-  private parseDownloadableItem(data: string): DownloadableItemBasic | DownloadableItem | null {
+  private parseDownloadableItem(
+    data: string
+  ): DownloadableItemBasic | DownloadableItem | null {
     try {
       let item = JSON.parse(data);
       if (item.formats) {
         // It's a typical DownloadableItem
         let video: number[] = [];
         let audio: number[] = [];
-        item.formats.forEach((format: { vcodec?: string; acodec?: string; height?: null | number; abr?: null | number; tbr?: null | number }) => {
-          if (format.vcodec !== "none" && video.indexOf(format.height ?? 0) === -1) {
-            video.push(format.height ?? 0);
-          } else if (format.acodec !== "none" && audio.indexOf(format.abr ?? format.tbr ?? 0) === -1) {
-            audio.push(format.abr ?? format.tbr ?? 0);
+        item.formats.forEach(
+          (format: {
+            vcodec?: string;
+            acodec?: string;
+            height?: null | number;
+            abr?: null | number;
+            tbr?: null | number;
+          }) => {
+            if (
+              format.vcodec !== "none" &&
+              video.indexOf(format.height ?? 0) === -1
+            ) {
+              video.push(format.height ?? 0);
+            } else if (
+              format.acodec !== "none" &&
+              audio.indexOf(format.abr ?? format.tbr ?? 0) === -1
+            ) {
+              audio.push(format.abr ?? format.tbr ?? 0);
+            }
           }
-        });
+        );
         // Sort in ascending order
         video.sort((a, b) => a - b);
         audio.sort((a, b) => a - b);
@@ -310,7 +375,10 @@ export class Downloader {
                 index: item.playlist_index,
               }
             : undefined,
-          subtitles: item.requested_subtitles == null ? [] : Object.keys(item.requested_subtitles),
+          subtitles:
+            item.requested_subtitles == null
+              ? []
+              : Object.keys(item.requested_subtitles),
           // UI state
           progress: {
             value: 0,
@@ -341,7 +409,12 @@ export class Downloader {
   /**
    * Calls youtube-dl with the given arguments and returns some info. Throws an error if youtube-dl cannot be found
    */
-  private callYoutubeDl(id: string, path: string, args: string[], dataCallback: (data: any) => void) {
+  private callYoutubeDl(
+    id: string,
+    path: string,
+    args: string[],
+    dataCallback: (data: any) => void
+  ) {
     if (this.runningProcesses.get(id) !== undefined) {
       console.warn(`Process with id ${id} is still running`);
       return;

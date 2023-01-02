@@ -213,7 +213,7 @@
         <div id="buttons">
           <button
             data-tooltip="Undo Clear"
-            v-if="this.undo.downloadables"
+            v-if="undo.downloadables"
             @click="undoClear"
             class="undo-button"
           >

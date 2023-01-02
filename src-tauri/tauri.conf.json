@@ -53,7 +53,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "com.tauri.dev",
+      "identifier": "io.github.stefnotch.downline",
       "longDescription": "",
       "macOS": {
         "entitlements": null,
