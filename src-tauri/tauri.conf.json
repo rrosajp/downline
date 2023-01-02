@@ -20,6 +20,11 @@
             "name": "yt-dlp",
             "cmd": "yt-dlp",
             "args": true
+          },
+          {
+            "name": "youtube-dl",
+            "cmd": "youtube-dl",
+            "args": true
           }
         ]
       },
