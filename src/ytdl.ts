@@ -1,4 +1,4 @@
-import { shell } from "@tauri-apps/api";
+import { invoke, shell } from "@tauri-apps/api";
 
 /**
  * Generates commandline arguments for yt-dl. Optionally also generates ffmpeg arguments.
@@ -80,7 +80,7 @@ export class Downloader {
     path: string,
     dataCallback: (data: { progress: DownloadProgress | null; progressStatus: string; filepath: string | null }) => void
   ) {
-    const args = this.downloadArgs(item, downloadOptions);
+    const args = await this.downloadArgs(item, downloadOptions);
 
     return this.callYoutubeDl(item.url, path, args, (data: string) => {
       console.log(data);
@@ -189,7 +189,7 @@ export class Downloader {
     return args;
   }
 
-  private downloadArgs(item: DownloadableItem, { videoFormat, audioFormat, downloadLocation, outputTemplate, compatibilityMode }: DownloadOptions) {
+  private async downloadArgs(item: DownloadableItem, { videoFormat, audioFormat, downloadLocation, outputTemplate, compatibilityMode }: DownloadOptions) {
     const args = [];
 
     // Progress bar
@@ -217,13 +217,10 @@ export class Downloader {
       args.push(format);
     }
 
-    // Output file name
-    if ((outputTemplate + "").trim().length > 0) {
-      // TODO: Put in correct folder (path join)
-      // https://github.com/ytdl-org/youtube-dl#how-do-i-put-downloads-into-a-specific-folder
-      // downloadLocation
-      args.push(...["--output", outputTemplate]);
-    }
+    await invoke("generate_ytdl_config", {"downloadFolder": downloadLocation})
+
+    const config_path = await invoke("get_ytdl_config_path")
+    args.push("--config-location", config_path)
 
     args.push("--embed-subs"); // Subtitles (TODO: Does this need --write-subs)
     args.push("--embed-thumbnail"); // Pretty thumbnails
