@@ -6,7 +6,6 @@
 use std::{fs, path::PathBuf};
 mod download_error;
 mod ytd_rs;
-use download_error::DownloadError;
 use serde::Serialize;
 use ytd_rs::YoutubeDL;
 
@@ -136,8 +135,7 @@ fn main() {
             load_store,
             save_store,
             generate_ytdl_config,
-            get_ytdl_config_path,
-            download_ytdl
+            get_ytdl_config_path
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
