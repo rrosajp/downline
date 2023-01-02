@@ -38,14 +38,6 @@ use std::{path::Path, process::Command};
 pub mod error;
 type Result<T> = std::result::Result<T, YoutubeDLError>;
 
-const YOUTUBE_DL_COMMAND: &str = if cfg!(feature = "youtube-dlc") {
-    "youtube-dlc"
-} else if cfg!(feature = "yt-dlp") {
-    "yt-dlp"
-} else {
-    "youtube-dl"
-};
-
 /// A structure that represents an argument of a youtube-dl command.
 ///
 /// There are two different kinds of Arg:
@@ -101,8 +93,13 @@ impl Display for Arg {
 /// and a ['link'] to the desired source.
 #[derive(Clone, Debug)]
 pub struct YoutubeDL {
+    /// Path to the youtube-dl binary
+    binary_path: PathBuf,
+    /// Path to the directory where the download should be executed
     path: PathBuf,
+    /// List of video links to download
     links: Vec<String>,
+    /// Arguments for the youtube-dl command
     args: Vec<Arg>,
 }
 
@@ -145,6 +142,7 @@ impl YoutubeDL {
     ///
     /// The path gets canonicalized and the directory gets created by the constructor
     pub fn new_multiple_links(
+        binary_path: PathBuf,
         dl_path: &PathBuf,
         args: Vec<Arg>,
         links: Vec<String>,
@@ -168,11 +166,21 @@ impl YoutubeDL {
 
         // absolute path
         let path = canonicalize(dl_path)?;
-        Ok(YoutubeDL { path, links, args })
+        Ok(YoutubeDL {
+            binary_path,
+            path,
+            links,
+            args,
+        })
     }
 
-    pub fn new(dl_path: &PathBuf, args: Vec<Arg>, link: &str) -> Result<YoutubeDL> {
-        YoutubeDL::new_multiple_links(dl_path, args, vec![link.to_string()])
+    pub fn new(
+        binary_path: PathBuf,
+        dl_path: &PathBuf,
+        args: Vec<Arg>,
+        link: &str,
+    ) -> Result<YoutubeDL> {
+        YoutubeDL::new_multiple_links(binary_path, dl_path, args, vec![link.to_string()])
     }
 
     /// Starts the download and returns when finished the result as [`YoutubeDLResult`].
@@ -189,7 +197,7 @@ impl YoutubeDL {
     }
 
     fn spawn_youtube_dl(&self) -> Result<Output> {
-        let mut cmd = Command::new(YOUTUBE_DL_COMMAND);
+        let mut cmd = Command::new(&self.binary_path);
         cmd.current_dir(&self.path)
             .env("LC_ALL", "en_US.UTF-8")
             .stdout(Stdio::piped())
@@ -213,14 +221,15 @@ impl YoutubeDL {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Arg, YoutubeDL};
+    use crate::{ytd_rs::Arg, YoutubeDL};
     use regex::Regex;
-    use std::{env, error::Error};
+    use std::{env, error::Error, path::PathBuf};
 
     #[test]
     fn version() -> Result<(), Box<dyn Error>> {
         let current_dir = env::current_dir()?;
         let ytd = YoutubeDL::new(
+            PathBuf::from("youtube-dl"),
             &current_dir,
             // get youtube-dl version
             vec![Arg::new("--version")],
