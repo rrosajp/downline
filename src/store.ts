@@ -39,6 +39,7 @@ export function useStore(version: Promise<string>, defaults: StoreData) {
   const data = reactive<StoreData>(JSON.parse(JSON.stringify(defaults)));
   const isFirstRun = ref(false);
   invoke("load_store").then(async (loadedData) => {
+    console.log("Loaded data", loadedData);
     if (!loadedData) {
       isFirstRun.value = true;
       return;
