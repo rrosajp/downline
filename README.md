@@ -59,12 +59,14 @@ Note that it may take over a minute the first time you try this out
 2. `npm install`
 3. `npm run tauri build`
 
-When publishing a new release, don't forget to update
+When publishing a new release, don't forget to
 
-- package.json
-- tauri.conf.json
-- store.ts migration
-- https://github.com/stefnotch/downline/tree/gh-pages
+- Update the version in `tauri.conf.json`
+- Update the version in `src-tauri/Cargo.toml`
+- Add a `src/store.ts` migration
+- Create a new tag with the version number
+- Wait for the expensive GitHub action and then publish the created release
+- Update https://github.com/stefnotch/downline/tree/gh-pages
 
 ## Credits
 
@@ -75,7 +77,3 @@ When publishing a new release, don't forget to update
 - [vuejs](https://vuejs.org/)
 - [esbuild](https://github.com/evanw/esbuild)
 - [vite tauri template](https://github.com/yooneskh/vite-tauri-template)
-
-## Legal
-
-This software is distributed under the [MIT license](https://github.com/stefnotch/downline/blob/master/LICENSE).
