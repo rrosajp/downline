@@ -6,8 +6,8 @@
     "distDir": "../dist"
   },
   "package": {
-    "productName": "downline",
-    "version": "0.1.0"
+    "productName": "Downline",
+    "version": "4.0.0"
   },
   "tauri": {
     "allowlist": {
@@ -77,7 +77,7 @@
         "fullscreen": false,
         "height": 600,
         "resizable": true,
-        "title": "downline",
+        "title": "Downline",
         "width": 800
       }
     ]
