@@ -2,7 +2,10 @@
   <section id="titlebar">
     <span
       class="fas"
-      :class="[{ 'fa-cog': activeTab === 'main' }, { 'fa-arrow-left': activeTab !== 'main' }]"
+      :class="[
+        { 'fa-cog': activeTab === 'main' },
+        { 'fa-arrow-left': activeTab !== 'main' },
+      ]"
       @click="activeTab = activeTab === 'main' ? 'settings' : 'main'"
     ></span>
     <h1>Downline</h1>
@@ -11,17 +14,41 @@
 
   <section id="main-page">
     <section id="inputbar">
-      <input type="text" spellcheck="false" placeholder="Enter URL" v-model="newURL" @keyup.enter="fetchInfo" />
+      <input
+        type="text"
+        spellcheck="false"
+        placeholder="Enter URL"
+        v-model="newURL"
+        @keyup.enter="fetchInfo"
+      />
       <span @click="fetchInfo" class="fas fa-plus"></span>
     </section>
 
     <section id="center" :class="{ 'center-height': showMoreOptions }">
       <transition-group name="fade">
-        <div class="downloadable" :class="{ chosen: item.isChosen }" v-for="item in store.data.downloadables" :key="item.url">
+        <div
+          class="downloadable"
+          :class="{ chosen: item.isChosen }"
+          v-for="item in store.data.downloadables"
+          :key="item.url"
+        >
           <section class="left">
-            <img :src="item.thumbnail" onerror="this.src='./static/images/placeholder.png'" />
-            <span class="fas fa-play-circle" v-if="item.state === 'stopped'" @click="download(item.url)"></span>
-            <span class="fas fa-pause-circle" v-else-if="item.state === 'downloading' || item.state === 'queued'" @click="pause(item.url)"></span>
+            <img
+              :src="item.thumbnail"
+              onerror="this.src='./static/images/placeholder.png'"
+            />
+            <span
+              class="fas fa-play-circle"
+              v-if="item.state === 'stopped'"
+              @click="download(item.url)"
+            ></span>
+            <span
+              class="fas fa-pause-circle"
+              v-else-if="
+                item.state === 'downloading' || item.state === 'queued'
+              "
+              @click="pause(item.url)"
+            ></span>
             <span v-else-if="isCompleted(item)">
               <span class="fas fa-check"></span>
               <span class="fas fa-redo-alt" @click="restart(item.url)"></span>
@@ -31,16 +58,34 @@
           <section class="middle" @click="(ev) => choose(ev, item)">
             <h1>{{ item.title }}</h1>
             <span class="duration">{{ formatDuration(item.duration) }}</span>
-            <div class="options" v-if="item.progress.value == 0 && item.state === 'stopped'">
+            <div
+              class="options"
+              v-if="item.progress.value == 0 && item.state === 'stopped'"
+            >
               <div>
-                <span class="fas fa-chevron-circle-left" @dblclick.stop @click.stop="decrement(item)"> </span>
-                <span class="quality">{{ chosenQuality(item) || "&mdash;" }}</span>
-                <span class="fas fa-chevron-circle-right" @dblclick.stop @click.stop="increment(item)"> </span>
+                <span
+                  class="fas fa-chevron-circle-left"
+                  @dblclick.stop
+                  @click.stop="decrement(item)"
+                >
+                </span>
+                <span class="quality">{{
+                  chosenQuality(item) || "&mdash;"
+                }}</span>
+                <span
+                  class="fas fa-chevron-circle-right"
+                  @dblclick.stop
+                  @click.stop="increment(item)"
+                >
+                </span>
               </div>
 
               <span
                 class="option-icon fas"
-                :class="{ 'fa-closed-captioning': item.subtitles.length !== 0, selected: item.isSubsChosen }"
+                :class="{
+                  'fa-closed-captioning': item.subtitles.length !== 0,
+                  selected: item.isSubsChosen,
+                }"
                 @dblclick.stop
                 @click.stop="updateIsSubsChosen([item])"
               >
@@ -58,16 +103,26 @@
             <div class="progress" v-else>
               <span class="info">
                 <span v-if="isCompleted(item)">
-                  <span class="fas fa-folder" @click="showInFolder(item.filepath)"></span>
+                  <span
+                    class="fas fa-folder"
+                    @click="showInFolder(item.filepath)"
+                  ></span>
                 </span>
                 <span v-else-if="isStarting(item)">Starting Download</span>
                 <span v-else-if="isQueued(item)">Queued</span>
                 <span v-else-if="isPaused(item)">
-                  <span>{{ item.progress.value }}% of {{ item.progress.size }}</span>
+                  <span
+                    >{{ item.progress.value }}% of
+                    {{ item.progress.size }}</span
+                  >
                   <span>Paused</span>
                 </span>
                 <span v-else-if="isDownloading(item)">
-                  <span>{{ item.progress.value }}% of {{ item.progress.size }} &centerdot; {{ item.progress.speed }}</span>
+                  <span
+                    >{{ item.progress.value }}% of
+                    {{ item.progress.size }} &centerdot;
+                    {{ item.progress.speed }}</span
+                  >
                   <span>{{ item.progress.eta }}</span>
                 </span>
                 <span class="postprocessing" v-else-if="isPostprocessing(item)">
@@ -76,7 +131,10 @@
                 </span>
               </span>
 
-              <span v-if="!isCompleted(item) && !isPostprocessing(item)" class="bar">
+              <span
+                v-if="!isCompleted(item) && !isPostprocessing(item)"
+                class="bar"
+              >
                 <span class="value" :style="progressValue(item.url)"></span>
               </span>
             </div>
@@ -88,31 +146,54 @@
         </div>
       </transition-group>
       <div id="empty-message" :class="{ 'show-empty-message': !existsItems }">
-        Type or paste a link above or press the <span>&plus;</span> button to grab link from clipboard
+        Type or paste a link above or press the <span>&plus;</span> button to
+        grab link from clipboard
       </div>
     </section>
 
     <section id="bottom">
-      <section id="more-options" :class="{ 'more-options-height': showMoreOptions }">
+      <section
+        id="more-options"
+        :class="{ 'more-options-height': showMoreOptions }"
+      >
         <div id="global-options" v-if="existsItems">
           <div
             id="download-or-pause-many"
             v-if="chosenItems.length !== 0"
             @click="downloadOrPauseMany"
             class="fas"
-            :class="[{ 'fa-pause-circle': areChosenDownloading }, { 'fa-play-circle': !areChosenDownloading }]"
+            :class="[
+              { 'fa-pause-circle': areChosenDownloading },
+              { 'fa-play-circle': !areChosenDownloading },
+            ]"
           ></div>
           <span id="global-quality-select" v-if="anyToBeDownloaded">
-            <span class="fas fa-chevron-circle-left" @click="() => modifiableItems.forEach((item) => decrement(item))"></span>
-            <span id="global-quality">{{ chosenQuality(multiDownloadItem) || "&mdash;" }}</span>
-            <span class="fas fa-chevron-circle-right" @click="() => modifiableItems.forEach((item) => increment(item))"></span>
+            <span
+              class="fas fa-chevron-circle-left"
+              @click="() => modifiableItems.forEach((item) => decrement(item))"
+            ></span>
+            <span id="global-quality">{{
+              chosenQuality(multiDownloadItem) || "&mdash;"
+            }}</span>
+            <span
+              class="fas fa-chevron-circle-right"
+              @click="() => modifiableItems.forEach((item) => increment(item))"
+            ></span>
           </span>
           <span
             class="fas fa-closed-captioning"
             data-tooltip="Download Subtitles"
             v-if="anyToBeDownloaded"
-            :class="{ selected: multiDownloadItem.isSubsChosen, hidden: !anySubbed }"
-            @click="updateIsSubsChosen(modifiableItems, !multiDownloadItem.isSubsChosen)"
+            :class="{
+              selected: multiDownloadItem.isSubsChosen,
+              hidden: !anySubbed,
+            }"
+            @click="
+              updateIsSubsChosen(
+                modifiableItems,
+                !multiDownloadItem.isSubsChosen
+              )
+            "
           >
           </span>
           <span
@@ -120,15 +201,42 @@
             data-tooltip="Audio Only"
             v-if="anyToBeDownloaded"
             :class="{ selected: multiDownloadItem.isAudioChosen }"
-            @click="updateIsAudioChosen(modifiableItems, !multiDownloadItem.isAudioChosen)"
+            @click="
+              updateIsAudioChosen(
+                modifiableItems,
+                !multiDownloadItem.isAudioChosen
+              )
+            "
           >
           </span>
         </div>
         <div id="buttons">
-          <button data-tooltip="Undo Clear" v-if="this.undo.downloadables" @click="undoClear" class="undo-button">Undo</button>
-          <span data-tooltip="Clear Completed" :class="{ hidden: !anyCompleted }" class="fas fa-minus-circle" @click="clearCompleted"></span>
-          <span data-tooltip="Clear All" v-if="existsItems && !anyChosen" class="fas fa-times-circle" @click="clearMany"></span>
-          <span data-tooltip="Clear Selected" v-if="existsItems && anyChosen" class="fas fa-times-circle" @click="clearMany"></span>
+          <button
+            data-tooltip="Undo Clear"
+            v-if="this.undo.downloadables"
+            @click="undoClear"
+            class="undo-button"
+          >
+            Undo
+          </button>
+          <span
+            data-tooltip="Clear Completed"
+            :class="{ hidden: !anyCompleted }"
+            class="fas fa-minus-circle"
+            @click="clearCompleted"
+          ></span>
+          <span
+            data-tooltip="Clear All"
+            v-if="existsItems && !anyChosen"
+            class="fas fa-times-circle"
+            @click="clearMany"
+          ></span>
+          <span
+            data-tooltip="Clear Selected"
+            v-if="existsItems && anyChosen"
+            class="fas fa-times-circle"
+            @click="clearMany"
+          ></span>
         </div>
       </section>
 
@@ -138,10 +246,17 @@
           <span class="">Loading</span>
         </span>
         <span id="show-hide" @click="toggleShowMore">
-          <span class="fas fa-angle-up" :class="{ 'rotate-arrow': showMoreOptions }"></span>
+          <span
+            class="fas fa-angle-up"
+            :class="{ 'rotate-arrow': showMoreOptions }"
+          ></span>
         </span>
         <span :class="{ hidden: !existsItems }" id="status">
-          {{ store.data.downloadables.length == 1 ? "1 Item" : store.data.downloadables.length + " Items" }}
+          {{
+            store.data.downloadables.length == 1
+              ? "1 Item"
+              : store.data.downloadables.length + " Items"
+          }}
         </span>
       </div>
     </section>
@@ -149,9 +264,24 @@
 
   <section id="extras" :class="{ 'show-extras': activeTab !== 'main' }">
     <ul id="tabs">
-      <li @click="activeTab = 'settings'" :class="{ active: activeTab === 'settings' }">Settings</li>
-      <li @click="activeTab = 'dependencies'" :class="{ active: activeTab === 'dependencies' }">Dependencies</li>
-      <li @click="activeTab = 'about'" :class="{ active: activeTab === 'about' }">About</li>
+      <li
+        @click="activeTab = 'settings'"
+        :class="{ active: activeTab === 'settings' }"
+      >
+        Settings
+      </li>
+      <li
+        @click="activeTab = 'dependencies'"
+        :class="{ active: activeTab === 'dependencies' }"
+      >
+        Dependencies
+      </li>
+      <li
+        @click="activeTab = 'about'"
+        :class="{ active: activeTab === 'about' }"
+      >
+        About
+      </li>
     </ul>
 
     <section id="settings" v-if="activeTab === 'settings'">
@@ -159,27 +289,54 @@
         <label>Download Location</label>
         <div>
           <span class="location-text">{{ store.data.downloadLocation }}</span>
-          <button class="choose-location" @click="selectDirectory">Browse</button>
+          <button class="choose-location" @click="selectDirectory">
+            Browse
+          </button>
         </div>
       </div>
 
       <div id="max-simultaneous">
         <label>Simultaneous Downloads <small>max. 5</small></label>
         <div>
-          <span class="fas fa-chevron-circle-left" @click="store.data.maxSimultaneous += store.data.maxSimultaneous > 1 ? -1 : 0"></span>
-          <span id="max-simultaneous-text">{{ store.data.maxSimultaneous }}</span>
-          <span class="fas fa-chevron-circle-right" @click="store.data.maxSimultaneous += store.data.maxSimultaneous < 5 ? 1 : 0"></span>
+          <span
+            class="fas fa-chevron-circle-left"
+            @click="
+              store.data.maxSimultaneous +=
+                store.data.maxSimultaneous > 1 ? -1 : 0
+            "
+          ></span>
+          <span id="max-simultaneous-text">{{
+            store.data.maxSimultaneous
+          }}</span>
+          <span
+            class="fas fa-chevron-circle-right"
+            @click="
+              store.data.maxSimultaneous +=
+                store.data.maxSimultaneous < 5 ? 1 : 0
+            "
+          ></span>
         </div>
       </div>
 
       <div class="formats">
         <header>Audio Format</header>
         <div>
-          <span class="fas fa-chevron-circle-left" @click="store.data.audioFormatIndex += store.data.audioFormatIndex > 0 ? -1 : 0"></span>
-          <span class="format-text">{{ audioFormats[store.data.audioFormatIndex] }}</span>
+          <span
+            class="fas fa-chevron-circle-left"
+            @click="
+              store.data.audioFormatIndex +=
+                store.data.audioFormatIndex > 0 ? -1 : 0
+            "
+          ></span>
+          <span class="format-text">{{
+            audioFormats[store.data.audioFormatIndex]
+          }}</span>
           <span
             class="fas fa-chevron-circle-right"
-            @click="store.data.audioFormatIndex += store.data.audioFormatIndex < audioFormats.length - 1 ? 1 : 0"
+            @click="
+              store.data.audioFormatIndex +=
+                store.data.audioFormatIndex < audioFormats.length - 1 ? 1 : 0
+            "
           ></span>
         </div>
       </div>
@@ -187,17 +344,37 @@
       <div class="formats">
         <header>Video Format</header>
         <div>
-          <span class="fas fa-chevron-circle-left" @click="store.data.videoFormatIndex += store.data.videoFormatIndex > 0 ? -1 : 0"></span>
-          <span class="format-text">{{ videoFormats[store.data.videoFormatIndex] }}</span>
+          <span
+            class="fas fa-chevron-circle-left"
+            @click="
+              store.data.videoFormatIndex +=
+                store.data.videoFormatIndex > 0 ? -1 : 0
+            "
+          ></span>
+          <span class="format-text">{{
+            videoFormats[store.data.videoFormatIndex]
+          }}</span>
           <span
             class="fas fa-chevron-circle-right"
-            @click="store.data.videoFormatIndex += store.data.videoFormatIndex < videoFormats.length - 1 ? 1 : 0"
+            @click="
+              store.data.videoFormatIndex +=
+                store.data.videoFormatIndex < videoFormats.length - 1 ? 1 : 0
+            "
           ></span>
         </div>
       </div>
 
-      <div id="autonumber-items" @click="store.data.autonumberItems = !store.data.autonumberItems">
-        <span class="fas" :class="[{ 'fa-square': !store.data.autonumberItems }, { 'fa-check-square': store.data.autonumberItems }]"></span>
+      <div
+        id="autonumber-items"
+        @click="store.data.autonumberItems = !store.data.autonumberItems"
+      >
+        <span
+          class="fas"
+          :class="[
+            { 'fa-square': !store.data.autonumberItems },
+            { 'fa-check-square': store.data.autonumberItems },
+          ]"
+        ></span>
         <label>Autonumber Playlist Items</label>
       </div>
     </section>
@@ -207,21 +384,54 @@
         <label>YouTube-DL Location</label>
         <div>
           <span class="location-text location-input">
-            <input type="text" spellcheck="false" placeholder="Enter path or name" v-model="store.data.ytdl.path" />
+            <input
+              type="text"
+              spellcheck="false"
+              placeholder="Enter path or name"
+              v-model="store.data.ytdl.path"
+            />
           </span>
-          <button class="choose-location" @click="selectYoutubeDl">Browse</button>
+          <button class="choose-location" @click="selectYoutubeDl">
+            Browse
+          </button>
         </div>
-        <div v-if="!store.data.ytdl.valid"><small>YouTube-DL could not be found.</small></div>
+        <div v-if="!store.data.ytdl.valid">
+          <small>YouTube-DL could not be found.</small>
+        </div>
         <div v-else>
           <small>Version {{ store.data.ytdl.version ?? "unknown" }}.</small>
         </div>
       </div>
+      <button @click="update">
+        <span
+          class="spinner"
+          v-show="ytdlUpdateMessage == 'loading' || ytdlDownloading"
+        ></span>
+        {{
+          ytdlUpdateMessage == "loading"
+            ? "Checking"
+            : ytdlDownloading
+            ? "Updating"
+            : "Update youtube-dl"
+        }}
+      </button>
+      <span
+        class="update-message"
+        v-if="ytdlUpdateMessage && ytdlUpdateMessage != 'loading'"
+      >
+        {{ ytdlUpdateMessage }}
+      </span>
       <div class="file-location">
         <!-- TODO: Download button -->
         <label>FFMPEG Location</label>
         <div>
           <span class="location-text location-input">
-            <input type="text" spellcheck="false" placeholder="Enter path or name" v-model="store.data.ffmpeg.path" />
+            <input
+              type="text"
+              spellcheck="false"
+              placeholder="Enter path or name"
+              v-model="store.data.ffmpeg.path"
+            />
           </span>
           <button class="choose-location" @click="selectFfmpeg">Browse</button>
         </div>
@@ -236,30 +446,26 @@
         Version
         <strong>{{ appVersion }}</strong>
       </div>
-      <p>Free and open-source media downloader for YouTube and many other sites</p>
+      <p>
+        Free and open-source media downloader for YouTube and many other sites
+      </p>
       <div id="author-list">
-        Created by <strong @click="openLink('https://github.com/jarbun')" class="author">Arjun B</strong> and
-        <strong @click="openLink('https://github.com/stefnotch')" class="author">Stefnotch</strong>
+        Created by
+        <strong @click="openLink('https://github.com/jarbun')" class="author"
+          >Arjun B</strong
+        >
+        and
+        <strong @click="openLink('https://github.com/stefnotch')" class="author"
+          >Stefnotch</strong
+        >
       </div>
-
-      <button @click="checkForUpdates">
-        <span class="spinner" v-show="newVersionMessage == 'loading'"></span>
-        {{ newVersionMessage == "loading" ? "Checking" : "Check for Updates" }}
-      </button>
-      <span class="update-message" v-if="newVersionMessage && newVersionMessage != 'loading'"> {{ newVersionMessage }} </span>
-
-      <button @click="update">
-        <span class="spinner" v-show="ytdlUpdateMessage == 'loading' || ytdlDownloading"></span>
-        {{ ytdlUpdateMessage == "loading" ? "Checking" : ytdlDownloading ? "Updating" : "Update youtube-dl" }}
-      </button>
-      <span class="update-message" v-if="ytdlUpdateMessage && ytdlUpdateMessage != 'loading'"> {{ ytdlUpdateMessage }} </span>
     </section>
   </section>
 </template>
 
 <script lang="ts">
 import { defineComponent, reactive, ref, computed, watch, toRef } from "vue";
-import { app, event, shell, path, dialog } from "@tauri-apps/api";
+import { app, event, shell, path, dialog, clipboard } from "@tauri-apps/api";
 import { useStore } from "./store";
 import { DownloadableItem, Downloader } from "./ytdl";
 import { debounce } from "@github/mini-throttle";
@@ -267,7 +473,6 @@ import { debounce } from "@github/mini-throttle";
 // TODO: Simply putting this next to a youtube-dl.exe works, except that the antivirus program will hate you for it. Weird.
 
 // TODO: Auto-updater
-// TODO: Clipboard
 // TODO: Update readme
 // TODO: Update website
 // TODO: Advertise a bit
@@ -341,8 +546,9 @@ export default defineComponent({
     const ongoingDownloads = ref(0);
     const downloadQueue = reactive<string[]>([]);
     const appVersion = ref("");
-    const activeTab = ref<"main" | "settings" | "dependencies" | "about">("main");
-    const newVersionMessage = ref("");
+    const activeTab = ref<"main" | "settings" | "dependencies" | "about">(
+      "main"
+    );
     const ytdlUpdateMessage = ref("");
     const ytdlDownloading = ref(false);
     const undo = reactive({
@@ -389,17 +595,23 @@ export default defineComponent({
 
     /**  Returns selected items if any, otherwise all items, that are not yet complete */
     const chosenItems = computed(() => {
-      return store.data.downloadables.filter((x) => (x.isChosen || !anyChosen.value) && x.state !== "completed");
+      return store.data.downloadables.filter(
+        (x) => (x.isChosen || !anyChosen.value) && x.state !== "completed"
+      );
     });
 
     /**  Returns items that are yet to be downloaded */
     const modifiableItems = computed(() => {
-      return chosenItems.value.filter((x) => x.state === "stopped" && x.progress?.value == 0);
+      return chosenItems.value.filter(
+        (x) => x.state === "stopped" && x.progress?.value == 0
+      );
     });
 
     /** Returns true if any modifiable items are to be downloaded */
     const anyToBeDownloaded = computed(() => {
-      return chosenItems.value.some((x) => x.state === "stopped" && x.progress?.value == 0);
+      return chosenItems.value.some(
+        (x) => x.state === "stopped" && x.progress?.value == 0
+      );
     });
 
     /**  Returns true if any modifiable items have subtitles */
@@ -414,17 +626,23 @@ export default defineComponent({
 
     /**  Returns true if any modifiable items are completed */
     const anyCompleted = computed(() => {
-      return store.data.downloadables.some((x) => (x.isChosen || !anyChosen.value) && x.state === "completed");
+      return store.data.downloadables.some(
+        (x) => (x.isChosen || !anyChosen.value) && x.state === "completed"
+      );
     });
 
     /**  Returns true if any item is chosen */
-    const anyChosen = computed(() => store.data.downloadables.some((x) => x.isChosen));
+    const anyChosen = computed(() =>
+      store.data.downloadables.some((x) => x.isChosen)
+    );
 
     const existsItems = computed(() => store.data.downloadables.length !== 0);
 
     const multiDownloadItem = computed(() => {
       const globalItem: MultipleDownloadableItem = {
-        isSubsChosen: modifiableItems.value.every((x) => x.subtitles.length === 0 || x.isSubsChosen),
+        isSubsChosen: modifiableItems.value.every(
+          (x) => x.subtitles.length === 0 || x.isSubsChosen
+        ),
         isAudioChosen: modifiableItems.value.every((x) => x.isAudioChosen),
         formats: {
           video: [] as any[],
@@ -435,15 +653,23 @@ export default defineComponent({
       };
 
       // Set audio and video to union of all audio and video formats
-      globalItem.formats.video = Array.from(new Set(modifiableItems.value.flatMap((v) => v.formats.video)));
-      globalItem.formats.audio = Array.from(new Set(modifiableItems.value.flatMap((v) => v.formats.audio)));
+      globalItem.formats.video = Array.from(
+        new Set(modifiableItems.value.flatMap((v) => v.formats.video))
+      );
+      globalItem.formats.audio = Array.from(
+        new Set(modifiableItems.value.flatMap((v) => v.formats.audio))
+      );
 
       // Sort in ascending order
       globalItem.formats.video.sort((a, b) => a - b);
       globalItem.formats.audio.sort((a, b) => a - b);
 
-      globalItem.formats.videoIndex = modifiableItems.value.map((v) => v.formats.videoIndex).reduce((p, v) => (p > v ? p : v), 0);
-      globalItem.formats.audioIndex = modifiableItems.value.map((v) => v.formats.audioIndex).reduce((p, v) => (p > v ? p : v), 0);
+      globalItem.formats.videoIndex = modifiableItems.value
+        .map((v) => v.formats.videoIndex)
+        .reduce((p, v) => (p > v ? p : v), 0);
+      globalItem.formats.audioIndex = modifiableItems.value
+        .map((v) => v.formats.audioIndex)
+        .reduce((p, v) => (p > v ? p : v), 0);
 
       return globalItem;
     });
@@ -485,13 +711,21 @@ export default defineComponent({
     }
 
     function chosenQuality(item: DownloadableItem | MultipleDownloadableItem) {
-      return item.isAudioChosen ? item.formats.audio[item.formats.audioIndex] : item.formats.video[item.formats.videoIndex];
+      return item.isAudioChosen
+        ? item.formats.audio[item.formats.audioIndex]
+        : item.formats.video[item.formats.videoIndex];
     }
 
     function increment(item: DownloadableItem) {
-      if (item.isAudioChosen && item.formats.audioIndex < item.formats.audio.length - 1) {
+      if (
+        item.isAudioChosen &&
+        item.formats.audioIndex < item.formats.audio.length - 1
+      ) {
         item.formats.audioIndex++;
-      } else if (!item.isAudioChosen && item.formats.videoIndex < item.formats.video.length - 1) {
+      } else if (
+        !item.isAudioChosen &&
+        item.formats.videoIndex < item.formats.video.length - 1
+      ) {
         item.formats.videoIndex++;
       }
     }
@@ -523,13 +757,17 @@ export default defineComponent({
 
         try {
           // TODO: Use fetchInfoQuick
-          await downloader.fetchInfo([newURL.value], store.data.ytdl.path, (item) => {
-            if ("formats" in item) {
-              addItem(item);
-            } else {
-              // TODO: Support for those basic items
+          await downloader.fetchInfo(
+            [newURL.value],
+            store.data.ytdl.path,
+            (item) => {
+              if ("formats" in item) {
+                addItem(item);
+              } else {
+                // TODO: Support for those basic items
+              }
             }
-          });
+          );
         } catch (e) {
           // TODO: Maybe something is wrong with youtube-dl?
           console.error(e);
@@ -539,16 +777,19 @@ export default defineComponent({
 
         newURL.value = "";
       } else {
-        // Get link from clipboard
-        // TODO: Hopefully the next Tauri update gets clipboard support
-        // Or maybe rewrite this too in Rust? (Like, a purely Rust based fetchInfo function!)
-        newURL.value = clipboard.readText();
+        const clipboardText = (await clipboard.readText()) ?? "";
+        const isUrl = clipboardText.startsWith("http");
+        if (isUrl) {
+          newURL.value = clipboardText;
+        }
       }
     }
 
     function addItem(item: DownloadableItem) {
       // Add downloadable to list if not already present
-      if (store.data.downloadables.findIndex((x) => x.url === item.url) === -1) {
+      if (
+        store.data.downloadables.findIndex((x) => x.url === item.url) === -1
+      ) {
         store.data.downloadables.push(item); // TODO: Use unshift? What about playlists? Or should I have item groups?
       }
     }
@@ -587,7 +828,9 @@ export default defineComponent({
                 downloadLocation: store.data.downloadLocation, // TODO: Append `item.playlist.title`
                 videoFormat: videoFormats[store.data.videoFormatIndex],
                 audioFormat: audioFormats[store.data.audioFormatIndex],
-                compatibilityMode: /youtube-dl(\.exe)?$/.test(store.data.ytdl.path),
+                compatibilityMode: /youtube-dl(\.exe)?$/.test(
+                  store.data.ytdl.path
+                ),
               },
               store.data.ytdl.path,
               (data) => {
@@ -618,7 +861,9 @@ export default defineComponent({
 
     // TODO: This is a reactive function??
     function progressValue(url: string) {
-      const value = store.data.downloadables.find((x) => x.url === url)?.progress?.value ?? 0;
+      const value =
+        store.data.downloadables.find((x) => x.url === url)?.progress?.value ??
+        0;
       return { width: `${value}%` };
     }
 
@@ -632,13 +877,17 @@ export default defineComponent({
     function clearCompleted() {
       undo.downloadables = store.data.downloadables.slice();
 
-      store.data.downloadables.filter((x) => x.state === "completed").forEach((x) => clear(x.url));
+      store.data.downloadables
+        .filter((x) => x.state === "completed")
+        .forEach((x) => clear(x.url));
     }
 
     function clearMany() {
       undo.downloadables = store.data.downloadables.slice();
 
-      store.data.downloadables.filter((x) => x.isChosen || !anyChosen.value).forEach((x) => clear(x.url));
+      store.data.downloadables
+        .filter((x) => x.isChosen || !anyChosen.value)
+        .forEach((x) => clear(x.url));
     }
 
     function undoClear() {
@@ -678,12 +927,14 @@ export default defineComponent({
       if (areChosenDownloading.value) {
         // Pause all chosen
         store.data.downloadables.forEach((x) => {
-          if ((x.isChosen || !anyChosen.value) && x.state !== "completed") pause(x.url);
+          if ((x.isChosen || !anyChosen.value) && x.state !== "completed")
+            pause(x.url);
         });
       } else {
         // Download all chosen
         store.data.downloadables.forEach((x) => {
-          if ((x.isChosen || !anyChosen.value) && x.state === "stopped") download(x.url);
+          if ((x.isChosen || !anyChosen.value) && x.state === "stopped")
+            download(x.url);
         });
       }
     }
@@ -711,7 +962,6 @@ export default defineComponent({
     }
 
     function openLink(link: string) {
-      // TODO: Not allowed!
       return shell.open(link);
     }
 
@@ -749,47 +999,6 @@ export default defineComponent({
         });
     }
 
-    // TODO: Not needed, because Tauri has a built-in updater
-    function checkForUpdates() {
-      return;
-      newVersionMessage.value = "loading";
-      fetch("https://api.github.com/repos/jarbun/downline/releases/latest", {
-        headers: {
-          "If-None-Match": etag.value,
-        },
-      })
-        .then(
-          function (response) {
-            if (response.status == 200) {
-              etag.value = response.headers.get("etag");
-
-              response.json().then(
-                function (data) {
-                  const currentVersion = `v${appVersion.value}`;
-                  latestVersion.value = data.tag_name;
-                  if (currentVersion == latestVersion.value) {
-                    newVersionMessage.value = "No updates available";
-                  } else {
-                    newVersionMessage.value = `New version ${latestVersion.value} available. Please download from website`;
-                  }
-                }.bind(this)
-              );
-            } else if (response.status == 304) {
-              const currentVersion = `v${appVersion.value}`;
-              if (currentVersion == latestVersion.value) {
-                newVersionMessage.value = "No updates available";
-              } else {
-                newVersionMessage.value = `New version ${latestVersion.value} available. Please download from website`;
-              }
-            }
-          }.bind(this)
-        )
-        .catch((err) => {
-          newVersionMessage.value = "";
-          console.log("Fetch Error: ", err);
-        });
-    }
-
     /** Update Youtube-DL */
     async function update() {
       if (ytdlDownloading.value) return;
@@ -808,7 +1017,9 @@ export default defineComponent({
     function formatDuration(seconds: number) {
       const hoursPart = Math.floor(seconds / (60 * 60));
       const minutesPart = Math.floor((seconds - hoursPart * 60 * 60) / 60);
-      const secondsPart = Math.ceil(seconds - hoursPart * 60 * 60 - minutesPart * 60);
+      const secondsPart = Math.ceil(
+        seconds - hoursPart * 60 * 60 - minutesPart * 60
+      );
       let result = minutesPart + ":" + (secondsPart + "").padStart(2, "0");
 
       if (hoursPart > 0) {
@@ -831,7 +1042,6 @@ export default defineComponent({
       downloadQueue,
       appVersion,
       activeTab,
-      newVersionMessage,
       ytdlUpdateMessage,
       ytdlDownloading,
       undo,
@@ -879,7 +1089,6 @@ export default defineComponent({
       selectDirectory,
       selectYoutubeDl,
       selectFfmpeg,
-      checkForUpdates,
       update,
       formatDuration,
     };

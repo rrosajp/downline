@@ -241,23 +241,20 @@ strong.author {
   text-decoration: underline;
 }
 
-#about button {
+#extras button {
   padding: 0 5px;
-  display: block;
   border-radius: 40px;
-  margin: 15px auto 0 auto;
   color: white;
   background-color: var(--blue-dark);
-  min-width: 180px;
 }
-#about button:hover {
+#extras button:hover {
   background-color: var(--blue-light);
 }
-#about button:active {
+#extras button:active {
   background-color: var(--blue-dark);
 }
 
-#about button .spinner {
+#extras button .spinner {
   margin-right: 2px;
   border-left-color: white;
   top: 3px;

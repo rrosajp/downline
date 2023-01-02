@@ -33,11 +33,11 @@ Sweet, [Microsoft is shipping Webview2 with more and more Windows 10 machines](h
 - Display errors
 - And more
 
-To support this project, you can [donate to the developer](https://www.paypal.com/donate?hosted_button_id=U8D5FNF9JSUFU).
+To support this project, you can donate to the developers.
 
 ## Developer Instructions
 
-After downloading the source code and having installed all the [prerequesites for your system](https://tauri.studio/en/docs/getting-started/intro)
+After downloading the source code and having installed all the [prerequesites for your system](https://tauri.app/v1/guides/getting-started/prerequisites)
 
 Install dependencies:
 
@@ -48,7 +48,7 @@ npm install
 Running the app in development mode (so you can edit without having to restart the app everytime):
 
 ```
-npm run dev
+npm run tauri dev
 ```
 
 Note that it may take over a minute the first time you try this out
@@ -57,9 +57,10 @@ Note that it may take over a minute the first time you try this out
 
 1. [Install the prerequesites for your system](https://tauri.app/v1/guides/getting-started/prerequisites)
 2. `npm install`
-3. `npm run build`
+3. `npm run tauri build`
 
 When publishing a new release, don't forget to update
+
 - package.json
 - tauri.conf.json
 - store.ts migration

@@ -1,76 +1,85 @@
 {
+  "build": {
+    "beforeBuildCommand": "npm run build",
+    "beforeDevCommand": "npm run dev",
+    "devPath": "http://localhost:5173",
+    "distDir": "../dist"
+  },
   "package": {
     "productName": "downline",
-    "version": "3.0.0"
-  },
-  "build": {
-    "distDir": "../dist",
-    "devPath": "http://localhost:8080/",
-    "beforeDevCommand": "vite --port 8080",
-    "beforeBuildCommand": "vite build"
+    "version": "0.1.0"
   },
   "tauri": {
+    "allowlist": {
+      "all": false,
+      "shell": {
+        "execute": true,
+        "open": "^",
+        "scope": [
+          {
+            "name": "yt-dlp",
+            "cmd": "yt-dlp",
+            "args": true
+          }
+        ]
+      },
+      "dialog": {
+        "open": true
+      },
+      "path": {
+        "all": true
+      },
+      "clipboard": {
+        "readText": true
+      }
+    },
     "bundle": {
       "active": true,
-      "targets": "all",
-      "identifier": "io.github.stefnotch.downline",
-      "icon": ["icons/32x32.png", "icons/128x128.png", "icons/icon.png", "icons/icon.icns", "icons/icon.ico"],
-      "resources": [],
-      "externalBin": [],
-      "copyright": "MIT",
       "category": "DeveloperTool",
-      "shortDescription": "",
-      "longDescription": "",
+      "copyright": "",
       "deb": {
-        "depends": [],
-        "useBootstrapper": false
+        "depends": []
       },
+      "externalBin": [],
+      "icon": [
+        "icons/32x32.png",
+        "icons/128x128.png",
+        "icons/128x128@2x.png",
+        "icons/icon.icns",
+        "icons/icon.ico"
+      ],
+      "identifier": "com.tauri.dev",
+      "longDescription": "",
       "macOS": {
-        "frameworks": [],
-        "minimumSystemVersion": "",
-        "useBootstrapper": false,
+        "entitlements": null,
         "exceptionDomain": "",
-        "signingIdentity": null,
-        "entitlements": null
+        "frameworks": [],
+        "providerShortName": null,
+        "signingIdentity": null
       },
+      "resources": [],
+      "shortDescription": "",
+      "targets": "all",
       "windows": {
         "certificateThumbprint": null,
         "digestAlgorithm": "sha256",
         "timestampUrl": ""
       }
     },
+    "security": {
+      "csp": null
+    },
     "updater": {
       "active": false
     },
-    "allowlist": {
-      "all": false,
-      "shell": {
-        "execute": true,
-        "open": true
-      },
-      "fs": {
-        "readTextFile": false,
-        "writeFile": false,
-        "path": true
-      },
-      "dialog": {
-        "open": true
-      }
-    },
     "windows": [
       {
-        "title": "downline",
-        "width": 460,
-        "height": 530,
-        "resizable": true,
         "fullscreen": false,
-        "minWidth": 420,
-        "minHeight": 500,
-        "fileDropEnabled": false
+        "height": 600,
+        "resizable": true,
+        "title": "downline",
+        "width": 800
       }
-    ],
-    "security": {
-      "csp": "default-src blob: data: filesystem: ws: wss: http: https: tauri: 'unsafe-eval' 'unsafe-inline' 'self' img-src: 'self'"
-    }
+    ]
   }
 }

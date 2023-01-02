@@ -1,3 +1,5 @@
+## v4.0.0 (2023-01-02)
+
 ## v3.0.0 (2021-07-19)
 This update is a rewrite of Downline in Tauri. This gets the filesize down to 5 MB.
 
