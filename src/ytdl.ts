@@ -268,7 +268,7 @@ export class Downloader {
 
     await invoke("generate_ytdl_config", { downloadFolder: downloadLocation });
 
-    const config_path = await invoke("get_ytdl_config_path");
+    const config_path: string = await invoke("get_ytdl_config_path");
     args.push("--config-location", config_path);
 
     args.push("--embed-subs"); // Subtitles (TODO: Does this need --write-subs)
