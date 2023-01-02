@@ -1,10 +1,4 @@
 {
-  "name": "downline",
-  "productName": "Downline",
-  "version": "4.0.0",
-  "description": "A cross-platform video and audio downloader for YouTube, Vimeo, Dailymotion, SoundCloud and many other sites",
-  "homepage": "https://github.com/stefnotch/downline",
-  "license": "MIT",
   "type": "module",
   "scripts": {
     "tauri": "tauri",
