@@ -8,7 +8,8 @@
 
 **Download the latest version [here](https://github.com/stefnotch/downline/releases/latest)**.
 
-Sweet, [Microsoft is shipping Webview2 with more and more Windows 10 machines](https://blogs.windows.com/msedgedev/2022/06/27/delivering-the-microsoft-edge-webview2-runtime-to-windows-10-consumers/). Downline updates incoming hopefully soon.
+**Project on ice:**
+Yt-dlp is a commandline Python program, and as such, has a horrible developer experience in terms of embedding. This won't change in the forseeable future.
 
 ## Screenshots
 
