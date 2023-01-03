@@ -39,7 +39,21 @@ To support this project, you can donate to the developers.
 
 After downloading the source code and having installed all the [prerequesites for your system](https://tauri.app/v1/guides/getting-started/prerequisites)
 
-Install dependencies:
+### Install youtube-dl
+
+Install youtube-dl using the following commands on Windows or macOS
+
+```sh
+curl -L https://yt-dl.org/downloads/latest/youtube-dl -o /usr/local/bin/youtube-dl
+chmod a+rx /usr/local/bin/youtube-dl
+```
+Or on Linux
+```sh
+sudo curl -L https://yt-dl.org/downloads/latest/youtube-dl -o /usr/local/bin/youtube-dl
+sudo chmod a+rx /usr/local/bin/youtube-dl
+```
+
+### Install dependencies
 
 ```
 npm install
