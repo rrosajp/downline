@@ -53,6 +53,8 @@ sudo curl -L https://yt-dl.org/downloads/latest/youtube-dl -o /usr/local/bin/you
 sudo chmod a+rx /usr/local/bin/youtube-dl
 ```
 
+For further information, check their [documentation](http://ytdl-org.github.io/youtube-dl/download.html).
+
 ### Install dependencies
 
 ```
