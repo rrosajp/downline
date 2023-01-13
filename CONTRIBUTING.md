@@ -61,6 +61,12 @@ The most important ones are
 - [Typescript](https://www.typescriptlang.org/) - Typesafe Javascript
 - [Vue 3](https://github.com/vuejs/vue-next/) - Vue 3 with [the composition API](https://vuejs.org/guide/extras/composition-api-faq.html#what-is-composition-api)
 
+## Unit Testing
+
+Unit testing the frontend is currently not being done, due to the lacking quality of the code and the relative difficulty of unit testing Typescript and GUIs. (Using Vitest is potentially the easiest approach.)
+
+Unit tests for the Rust part should be added, especially for non-trivial functions.
+
 ## Publishing a release
 
 Build the project using
