@@ -27,62 +27,11 @@ Sweet, [Microsoft is shipping Webview2 with more and more Windows 10 machines](h
 - Download and embed subtitles
 - Download multiple files simultaneously
 
-### Coming Soon
-
-- More file naming options
-- Display errors
-- And more
-
 To support this project, you can donate to the developers.
 
 ## Developer Instructions
 
-After downloading the source code and having installed all the [prerequesites for your system](https://tauri.app/v1/guides/getting-started/prerequisites)
-
-### Install youtube-dl
-
-Install youtube-dl using the following commands on Windows or macOS
-
-```sh
-curl -L https://yt-dl.org/downloads/latest/youtube-dl -o /usr/local/bin/youtube-dl
-chmod a+rx /usr/local/bin/youtube-dl
-```
-Or on Linux
-```sh
-sudo curl -L https://yt-dl.org/downloads/latest/youtube-dl -o /usr/local/bin/youtube-dl
-sudo chmod a+rx /usr/local/bin/youtube-dl
-```
-
-For further information, check their [documentation](http://ytdl-org.github.io/youtube-dl/download.html).
-
-### Install dependencies
-
-```
-npm install
-```
-
-Running the app in development mode (so you can edit without having to restart the app everytime):
-
-```
-npm run tauri dev
-```
-
-Note that it may take over a minute the first time you try this out
-
-### Build Instructions
-
-1. [Install the prerequesites for your system](https://tauri.app/v1/guides/getting-started/prerequisites)
-2. `npm install`
-3. `npm run tauri build`
-
-When publishing a new release, don't forget to
-
-- Update the version in `tauri.conf.json`
-- Update the version in `src-tauri/Cargo.toml`
-- Add a `src/store.ts` migration
-- Create a new tag with the version number
-- Wait for the expensive GitHub action and then publish the created release
-- Update https://github.com/stefnotch/downline/tree/gh-pages
+[Check out CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## Credits
 
