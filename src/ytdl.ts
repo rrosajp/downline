@@ -266,7 +266,7 @@ export class Downloader {
       args.push(format);
     }
 
-    args.push(`-o {downloadLocation}/%(title)s [%(id)s].%(ext)s`);
+    args.push(`-o`, `${downloadLocation}/%(title)s [%(id)s].%(ext)s`);
     args.push("--embed-subs"); // Subtitles (TODO: Does this need --write-subs)
     args.push("--embed-thumbnail"); // Pretty thumbnails
     //args.push("--embed-metadata"); // More metadata (TODO: Youtube-dl doesn't understand this)

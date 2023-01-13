@@ -3,11 +3,8 @@
     windows_subsystem = "windows"
 )]
 
-use std::{fs, path::PathBuf};
-mod download_error;
-mod ytd_rs;
 use serde::Serialize;
-use ytd_rs::YoutubeDL;
+use std::{fs, path::PathBuf};
 
 #[tauri::command]
 fn load_store(app_handle: tauri::AppHandle) -> Option<String> {
