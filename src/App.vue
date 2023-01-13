@@ -105,7 +105,7 @@
                 <span v-if="isCompleted(item)">
                   <span
                     class="fas fa-folder"
-                    @click="showInFolder(item.filepath)"
+                    @click="showInFolder(store.data.downloadLocation)"
                   ></span>
                 </span>
                 <span v-else-if="isStarting(item)">Starting Download</span>
@@ -964,9 +964,7 @@ export default defineComponent({
 
     function showInFolder(filepath: string | undefined) {
       if (filepath === undefined) return;
-      // TODO: Not allowed!
-      // TODO: Replace this with something more rock-solid
-      return shell.open(filepath.substring(0, filepath.lastIndexOf("/")));
+      return shell.open(filepath);
     }
 
     function openLink(link: string) {
