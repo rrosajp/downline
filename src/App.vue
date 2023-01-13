@@ -262,7 +262,7 @@
     </section>
   </section>
 
-  <section id="extras" :class="{ 'show-extras': activeTab !== 'main' }">
+  <section id="extras" v-if="activeTab !== 'main'">
     <ul id="tabs">
       <li
         @click="activeTab = 'settings'"
@@ -1103,5 +1103,4 @@ export default defineComponent({
     };
   },
 });
-
 </script>
