@@ -593,6 +593,10 @@ export default defineComponent({
       );
     }
 
+    window.onfocus = () => {
+      grabFromClipboard();
+    };
+
     /**  Returns selected items if any, otherwise all items, that are not yet complete */
     const chosenItems = computed(() => {
       return store.data.downloadables.filter(
@@ -777,11 +781,15 @@ export default defineComponent({
 
         newURL.value = "";
       } else {
-        const clipboardText = (await clipboard.readText()) ?? "";
-        const isUrl = clipboardText.startsWith("http");
-        if (isUrl) {
-          newURL.value = clipboardText;
-        }
+        await grabFromClipboard();
+      }
+    }
+
+    async function grabFromClipboard() {
+      const clipboardText = (await clipboard.readText()) ?? "";
+      const isUrl = clipboardText.startsWith("http");
+      if (isUrl) {
+        newURL.value = clipboardText;
       }
     }
 
@@ -1072,6 +1080,7 @@ export default defineComponent({
       updateIsAudioChosen,
       updateIsSubsChosen,
       fetchInfo,
+      grabFromClipboard,
       addItem,
       download,
       progressValue,
@@ -1094,4 +1103,5 @@ export default defineComponent({
     };
   },
 });
+
 </script>
