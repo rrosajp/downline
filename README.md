@@ -29,6 +29,22 @@ Sweet, [Microsoft is shipping Webview2 with more and more Windows 10 machines](h
 
 To support this project, you can donate to the developers.
 
+## Tutorials for users
+
+### Download a video
+
+1. Paste the link into the bar on the top of the screen.
+If Downline detects a link in your clipboard, it will automatically paste it, otherwise you can use the blue `+` button on the right of the text field.
+2. Press the `enter` key, the video will then appear in the list below.
+3. Click on the thumbnail of the video to start the download.
+
+### Download a YouTube playlist
+
+1. Paste the link of the playlist. Make sure the link looks like this: `https://www.youtube.com/playlist?list=...`, so that it's pointing directly to the playlist and not to some video inside the playlist.
+2. Press the `enter` key, the videos included in the playlist will then appear in the list below.
+3. Uncollapse the bottom bar by clicking on the little arrow in the bottom center.
+4. Click the play button in the left of the bar to start downloading all videos.
+
 ## Developer Instructions
 
 [Check out CONTRIBUTING.md](CONTRIBUTING.md)
