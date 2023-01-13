@@ -760,9 +760,8 @@ export default defineComponent({
         isLoading.value = true;
 
         try {
-          // TODO: Use fetchInfoQuick
           await downloader.fetchInfo(
-            [newURL.value],
+            newURL.value,
             store.data.ytdl.path,
             (item) => {
               if ("formats" in item) {

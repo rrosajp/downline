@@ -54,36 +54,20 @@ export class Downloader {
    *
    * @throws an error if youtube-dl is missing
    */
-  async fetchInfoQuick(
-    urls: string[],
-    path: string,
-    dataCallback: (data: DownloadableItemBasic | DownloadableItem) => void
-  ) {
-    if (urls.length === 0) return;
-
-    const args = this.fetchInfoQuickArgs(urls);
-
-    return this.callYoutubeDl(urls[0], path, args, (data) => {
-      const item = this.parseDownloadableItem(data);
-      if (!item) return;
-      dataCallback(item);
-    });
-  }
-
-  /**
-   *
-   * @throws an error if youtube-dl is missing
-   */
   async fetchInfo(
-    urls: string[],
+    url: string,
     path: string,
     dataCallback: (data: DownloadableItem) => void
   ) {
-    if (urls.length === 0) return;
+    const args = [
+      "--all-subs",
+      "--dump-json",
+      "--no-playlist",
+      "--ignore-errors",
+      url,
+    ];
 
-    const args = this.fetchInfoArgs(urls);
-
-    return this.callYoutubeDl(urls[0], path, args, (data) => {
+    return this.callYoutubeDl(url, path, args, (data) => {
       const item = this.parseDownloadableItem(data);
       if (item && "formats" in item) {
         dataCallback(item);
@@ -203,24 +187,6 @@ export class Downloader {
     return this.callYoutubeDl("update", path, args, (data) => {
       dataCallback(data);
     });
-  }
-
-  /** Fetches very basic information for a list of URLs */
-  private fetchInfoQuickArgs(urls: string[]) {
-    const args = ["--dump-json", "--flat-playlist", "--ignore-errors", ...urls];
-    return args;
-  }
-
-  /** Fetches information for a list of URLs */
-  private fetchInfoArgs(urls: string[]) {
-    const args = [
-      "--all-subs",
-      "--dump-json",
-      "--no-playlist",
-      "--ignore-errors",
-      ...urls,
-    ];
-    return args;
   }
 
   private async downloadArgs(
