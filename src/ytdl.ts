@@ -266,11 +266,7 @@ export class Downloader {
       args.push(format);
     }
 
-    await invoke("generate_ytdl_config", { downloadFolder: downloadLocation });
-
-    const config_path: string = await invoke("get_ytdl_config_path");
-    args.push("--config-location", config_path);
-
+    args.push(`-o {downloadLocation}/%(title)s [%(id)s].%(ext)s`);
     args.push("--embed-subs"); // Subtitles (TODO: Does this need --write-subs)
     args.push("--embed-thumbnail"); // Pretty thumbnails
     //args.push("--embed-metadata"); // More metadata (TODO: Youtube-dl doesn't understand this)
