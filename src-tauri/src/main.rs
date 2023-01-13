@@ -130,6 +130,7 @@ async fn download_ytdl(app_handle: tauri::AppHandle) -> Result<DownloadResult, t
 } */
 
 fn main() {
+    fix_path_env::fix();
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             load_store,
