@@ -11,6 +11,8 @@
 **Project on ice:**
 Yt-dlp is a commandline Python program, and as such, has a horrible developer experience in terms of embedding. This won't change in the forseeable future.
 
+Potential developments would be a cross platform Python binary [like this](https://ahgamut.github.io/2021/07/13/ape-python/) with all the required modules, or RustPython with all the required modules. Or a cross platform package manager that applications can rely on (so that downline can say "dear OS, make sure that yt-dlp is installed").
+
 ## Screenshots
 
 <p align="center">
