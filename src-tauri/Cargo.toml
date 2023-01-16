@@ -1,6 +1,6 @@
 [package]
 name = "app"
-version = "4.0.1"
+version = "4.0.2"
 description = "A free, cross-platform desktop application for downloading video and audio"
 authors = ["jarbun", "Stefnotch", "Janldeboer"]
 license = "MIT"
