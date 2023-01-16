@@ -29,6 +29,35 @@ Sweet, [Microsoft is shipping Webview2 with more and more Windows 10 machines](h
 
 To support this project, you can donate to the developers.
 
+## Installing youtube-dl
+
+If you have `pip` installed, you can install youtube-dl by running
+```
+# Linux
+sudo pip install --upgrade youtube_dl
+```
+or
+```
+# Windows and macOS
+pip install --upgrade youtube_dl
+```
+
+Alternativly for Windows, you can download the `.exe` file [here](http://ytdl-org.github.io/youtube-dl/download.html)
+
+On macOS, you can install it using homebrew:
+```
+brew install youtube-dl
+```
+
+Or on Linux (and macOS), you can use the following command:
+```
+sudo curl -L https://yt-dl.org/downloads/latest/youtube-dl -o /usr/local/bin/youtube-dl
+sudo chmod a+rx /usr/local/bin/youtube-dl
+```
+
+Detailed instuctions are available on the offical [youtube-dl website](http://ytdl-org.github.io/youtube-dl/download.html)
+
+
 ## Tutorials for users
 
 ### Download a video
