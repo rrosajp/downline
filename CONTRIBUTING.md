@@ -67,6 +67,10 @@ Unit testing the frontend is currently not being done, due to the lacking qualit
 
 Unit tests for the Rust part should be added, especially for non-trivial functions.
 
+## Structure of code
+
+We're using the default Tauri file structure. Essentially `src-tauri` contains the Rust part of the project, while `src` contains the frontend part of the project.
+
 ## Publishing a release
 
 Build the project using
