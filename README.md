@@ -6,9 +6,14 @@
 
 [Check out the other youtube-dl GUIs here](https://www.reddit.com/r/youtubedl/wiki/info-guis), I personally quite recommend [this one](https://github.com/jely2002/youtube-dl-gui)
 
-**Download the latest version [here](https://github.com/stefnotch/downline/releases/latest)**.
 
-Sweet, [Microsoft is shipping Webview2 with more and more Windows 10 machines](https://blogs.windows.com/msedgedev/2022/06/27/delivering-the-microsoft-edge-webview2-runtime-to-windows-10-consumers/). Downline updates incoming hopefully soon.
+## Searching for maintainers and developers
+
+I'm searching for someone to take over this project!
+
+Background: Yt-dlp is a commandline Python program, and as such, has a horrible developer experience in terms of embedding. This won't change in the forseeable future, and frustrates me to the point where I do not enjoy working on this yt-dlp frontend. Potential developments that I'd love to see would be a cross platform Python binary [like this](https://ahgamut.github.io/2021/07/13/ape-python/) with all the required modules, or RustPython with all the required modules. Or a cross platform package manager that applications can rely on (so that downline can say "dear OS, make sure that yt-dlp is installed").
+
+
 
 ## Screenshots
 
